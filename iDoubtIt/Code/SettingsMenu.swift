@@ -11,7 +11,7 @@ import SpriteKit
 class SettingsMenu: SKScene  {
     
     override func didMoveToView(view: SKView) {
-        let bg = SKSpriteNode(imageNamed: "bg_blue")
+        let bg = SKSpriteNode(imageNamed: background)
         bg.anchorPoint = CGPoint.zero
         bg.position = CGPoint.zero
         bg.size = CGSizeMake(screenWidth, screenHeight)

@@ -12,6 +12,10 @@ enum Difficulty :Int {
     case Easy = 60,
     Medium = 35,
     Hard = 15
+    
+    static let allValues = [Easy,
+                     Medium,
+                     Hard]
 }
 
 enum player :Int {
@@ -39,9 +43,8 @@ class Player : SKNode {
     var NoCardsBluff = noCardsBluff.init()
     var playThisMany = Int()
     var isWacky = Bool()
-    var playerName = String()
     
-    init(isHuman: Bool, level: Difficulty?) {
+    init(isHuman: Bool, playerName: String, level: Difficulty?) {
         if (isHuman) {
             
         }
@@ -71,6 +74,52 @@ class Player : SKNode {
         else {
             return false
         }
+    }
+    
+    func findCardsInHand(value: Value) -> NSIndexSet {
+        let locations = NSMutableIndexSet()
+        var indexes = NSIndexSet()
+        
+        for i in 0 ..< playerHand.count {
+            let card = playerHand.objectAtIndex(i) as! Card
+            if (isWacky) {
+                if (card.value == value) {
+                    locations.addIndex(i)
+                }
+            } else {
+                if (card.value == value && locations.count <= 3) {
+                    locations.addIndex(i)
+                }
+            }
+        }
+        if (locations.count != 0) {
+           indexes = NSIndexSet.init(indexSet: locations)
+        }
+        return indexes
+    }
+    
+    func playHand(value: Value, diff: Difficulty) -> NSMutableArray {
+        let matchingCardsInHand = findCardsInHand(value)
+//        let randomCads = NSIndexSet()
+        if (isWacky && (playerHand.count > matchingCardsInHand.count)) {
+            switch diff{
+            case .Easy:
+                if (abs(Int(arc4random()) % 100) <= Difficulty.Easy.rawValue) {
+                    if (matchingCardsInHand.count >= 6) {
+
+                    }
+                }
+            case .Medium:
+                if (abs(Int(arc4random()) % 100) <= Difficulty.Medium.rawValue) {
+            
+                }
+            case .Hard:
+                if (abs(Int(arc4random()) % 100) <= Difficulty.Hard.rawValue) {
+                    
+                }
+            }
+        }
+        return NSMutableArray()
     }
     
     required init?(coder aDecoder: NSCoder) {

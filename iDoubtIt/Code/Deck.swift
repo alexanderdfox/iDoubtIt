@@ -15,10 +15,10 @@ class Deck : NSObject {
     init(wacky: Bool) {
         var card :Card
         if !wacky {
-            for suite in CardType.allValues {
+            for suit in CardType.allValues {
                 for value in Value.allValues {
-                    if (suite != .NOSUITE && value != .Joker) {
-                        card = Card(cardType: suite, value: value)
+                    if (suit != .NOSUIT && value != .Joker) {
+                        card = Card(cardType: suit, value: value)
                         card.position = CGPointMake(screenWidth/2,screenHeight/2)
                         gameDeck.addObject(card)
                     }
@@ -26,14 +26,14 @@ class Deck : NSObject {
             }
         }
         else {
-            for suite in CardType.allValues {
+            for suit in CardType.allValues {
                 for value in Value.allValues {
-                    if (suite != .NOSUITE && value != .Joker) {
-                        card = Card(cardType: suite, value: value)
+                    if (suit != .NOSUIT && value != .Joker) {
+                        card = Card(cardType: suit, value: value)
                         card.position = CGPointMake(screenWidth/2,screenHeight/2)
                         gameDeck.addObject(card)
-                    } else if (suite == .NOSUITE && value != .Joker) {
-                        card = Card(cardType: suite, value: .Joker)
+                    } else if (suit == .NOSUIT && value != .Joker) {
+                        card = Card(cardType: suit, value: .Joker)
                         card.position = CGPointMake(screenWidth/2,screenHeight/2)
                         gameDeck.addObject(card)
                     }

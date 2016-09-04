@@ -26,6 +26,11 @@ let screenSize: CGRect = UIScreen.mainScreen().bounds
 let screenWidth = screenSize.width
 let screenHeight = screenSize.height
 let deck = Deck.init(wacky: true)
+var soundOn :Bool = true
+var isWacky :Bool = false
+var difficulty :Int = 0
+var background :String = Background.bg_blue.rawValue
+var cardCover :String = cardBack.cardBack_blue4.rawValue
 
 enum CardLevel :CGFloat {
   case board = 20
@@ -34,9 +39,37 @@ enum CardLevel :CGFloat {
 }
 
 class GameScene: SKScene {
-
+    
   override func didMoveToView(view: SKView) {
-    let bg = SKSpriteNode(imageNamed: "bg_blue")
+    let prefs = NSUserDefaults.standardUserDefaults()
+    
+    if (prefs.objectForKey("Sound") == nil) {
+        prefs.setBool(true, forKey: "Sound")
+    } else {
+        soundOn = prefs.boolForKey("Sound")
+    }
+    if (prefs.objectForKey("Wacky") == nil) {
+        prefs.setBool(false, forKey: "Wacky")
+    } else {
+        isWacky = prefs.boolForKey("Wacky")
+    }
+    if (prefs.objectForKey("Difficulty") == nil) {
+        prefs.setInteger(Difficulty.Easy.rawValue, forKey: "Difficulty")
+    } else {
+        difficulty = prefs.integerForKey("Difficulty")
+    }
+    if (prefs.objectForKey("Background") == nil) {
+        prefs.setValue(Background.bg_blue.rawValue, forKey: "Background")
+    } else {
+        background = prefs.stringForKey("Background")!
+    }
+    if (prefs.objectForKey("CardCover") == nil) {
+        prefs.setValue(cardBack.cardBack_blue4.rawValue, forKey: "CardCover")
+    } else {
+        cardCover = prefs.stringForKey("CardCover")!
+    }
+    
+    let bg = SKSpriteNode(imageNamed: background)
     bg.anchorPoint = CGPoint.zero
     bg.position = CGPoint.zero
     bg.size = CGSizeMake(screenWidth, screenHeight)

@@ -27,13 +27,13 @@ enum CardType :NSString {
   Spades,
   Clubs,
   Diamonds,
-  NOSUITE
+  NOSUIT
 
   static let allValues = [Hearts,
                           Spades,
                           Clubs,
                           Diamonds,
-                          NOSUITE]
+                          NOSUIT]
 }
 
 enum Value :NSString {
@@ -123,9 +123,9 @@ class Card : SKSpriteNode {
     init(cardType: CardType, value: Value) {
     self.cardType = cardType
     self.value = value
-    backTexture = SKTexture(imageNamed: cardBack.cardBack_blue4.rawValue)
+    backTexture = SKTexture(imageNamed: cardCover)
     
-    if (value != .Joker || cardType != .NOSUITE) {
+    if (value != .Joker || cardType != .NOSUIT) {
         cardName = String(format: "%@of%@", value.rawValue, cardType.rawValue)
     }
     else {
@@ -194,7 +194,7 @@ class Card : SKSpriteNode {
     
     func getIcon() -> String {
         switch (value, cardType) {
-        case (.Joker, .NOSUITE): return "🃏"
+        case (.Joker, .NOSUIT): return "🃏"
         case (.Joker, .Hearts): return "🃏♥️"
         case (.Joker, .Spades): return "🃏♠️"
         case (.Joker, .Clubs): return "🃏♣️"

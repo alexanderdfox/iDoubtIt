@@ -23,13 +23,17 @@
 import UIKit
 import SpriteKit
 
+enum Background :String {
+    case bg_blue
+}
+
 class GameViewController: UIViewController {
   
   override func viewDidLoad() {
     super.viewDidLoad()
     self.becomeFirstResponder()
+    
     let scene = MainMenu(size: CGSize(width: screenWidth, height: screenHeight))
-//    let scene = GameScene(size: CGSize(width: screenWidth, height: screenHeight))
     let skView = self.view as! SKView
     
     skView.showsFPS = true
