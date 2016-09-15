@@ -9,20 +9,20 @@
 import SpriteKit
 
 enum Difficulty :Int {
-    case Easy = 60,
-    Medium = 35,
-    Hard = 15
+    case easy = 60,
+    medium = 35,
+    hard = 15
     
-    static let allValues = [Easy,
-                     Medium,
-                     Hard]
+    static let allValues = [easy,
+                     medium,
+                     hard]
 }
 
 enum player :Int {
-    case HumanPlayer = 0,
-    AiPlayerOne = 1,
-    AiPlayerTwo = 2,
-    AiPlayerThree = 3
+    case humanPlayer = 0,
+    aiPlayerOne = 1,
+    aiPlayerTwo = 2,
+    aiPlayerThree = 3
 }
 
 struct noCardsBluff {
@@ -39,10 +39,9 @@ struct determineBluff {
 
 class Player : SKNode {
     
-    var playerHand = NSMutableArray()
-    var NoCardsBluff = noCardsBluff.init()
-    var playThisMany = Int()
-    var isWacky = Bool()
+    fileprivate var playerHand = NSMutableArray()
+    fileprivate var NoCardsBluff = noCardsBluff.init()
+    fileprivate var playThisMany = Int()
     
     init(isHuman: Bool, playerName: String, level: Difficulty?) {
         if (isHuman) {
@@ -50,21 +49,21 @@ class Player : SKNode {
         }
         else if (!isHuman && level != nil) {
             switch level {
-            case .Easy?: playThisMany = NoCardsBluff.Easy.0
-            case .Medium?: playThisMany = NoCardsBluff.Medium.0
-            case .Hard?: playThisMany = NoCardsBluff.Hard.0
+            case .easy?: playThisMany = NoCardsBluff.Easy.0
+            case .medium?: playThisMany = NoCardsBluff.Medium.0
+            case .hard?: playThisMany = NoCardsBluff.Hard.0
             default: print("‼️")
             }
         }
         super.init()
     }
     
-    func addCard(card: Card) {
-        playerHand.addObject(card)
+    func addCard(_ card: Card) {
+        playerHand.add(card)
     }
     
-    func addCards(cards: NSMutableArray) {
-        playerHand.addObjectsFromArray(cards as [AnyObject])
+    func addCards(_ cards: NSMutableArray) {
+        playerHand.addObjects(from: cards as [AnyObject])
     }
     
     func hasCards() -> Bool {
@@ -76,45 +75,45 @@ class Player : SKNode {
         }
     }
     
-    func findCardsInHand(value: Value) -> NSIndexSet {
+    func findCardsInHand(_ value: Value) -> IndexSet {
         let locations = NSMutableIndexSet()
-        var indexes = NSIndexSet()
+        var indexes = IndexSet()
         
         for i in 0 ..< playerHand.count {
-            let card = playerHand.objectAtIndex(i) as! Card
+            let card = playerHand.object(at: i) as! Card
             if (isWacky) {
                 if (card.value == value) {
-                    locations.addIndex(i)
+                    locations.add(i)
                 }
             } else {
                 if (card.value == value && locations.count <= 3) {
-                    locations.addIndex(i)
+                    locations.add(i)
                 }
             }
         }
         if (locations.count != 0) {
-           indexes = NSIndexSet.init(indexSet: locations)
+           indexes = IndexSet.init(locations)
         }
         return indexes
     }
     
-    func playHand(value: Value, diff: Difficulty) -> NSMutableArray {
+    func playHand(_ value: Value, diff: Difficulty) -> NSMutableArray {
         let matchingCardsInHand = findCardsInHand(value)
 //        let randomCads = NSIndexSet()
         if (isWacky && (playerHand.count > matchingCardsInHand.count)) {
             switch diff{
-            case .Easy:
-                if (abs(Int(arc4random()) % 100) <= Difficulty.Easy.rawValue) {
+            case .easy:
+                if (abs(Int(arc4random()) % 100) <= Difficulty.easy.rawValue) {
                     if (matchingCardsInHand.count >= 6) {
 
                     }
                 }
-            case .Medium:
-                if (abs(Int(arc4random()) % 100) <= Difficulty.Medium.rawValue) {
+            case .medium:
+                if (abs(Int(arc4random()) % 100) <= Difficulty.medium.rawValue) {
             
                 }
-            case .Hard:
-                if (abs(Int(arc4random()) % 100) <= Difficulty.Hard.rawValue) {
+            case .hard:
+                if (abs(Int(arc4random()) % 100) <= Difficulty.hard.rawValue) {
                     
                 }
             }

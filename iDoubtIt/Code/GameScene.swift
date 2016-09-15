@@ -22,7 +22,7 @@
 
 import SpriteKit
 
-let screenSize: CGRect = UIScreen.mainScreen().bounds
+let screenSize: CGRect = UIScreen.main.bounds
 let screenWidth = screenSize.width
 let screenHeight = screenSize.height
 let deck = Deck.init(wacky: true)
@@ -40,50 +40,50 @@ enum CardLevel :CGFloat {
 
 class GameScene: SKScene {
     
-  override func didMoveToView(view: SKView) {
-    let prefs = NSUserDefaults.standardUserDefaults()
+  override func didMove(to view: SKView) {
+    let prefs = UserDefaults.standard
     
-    if (prefs.objectForKey("Sound") == nil) {
-        prefs.setBool(true, forKey: "Sound")
+    if (prefs.object(forKey: "Sound") == nil) {
+        prefs.set(true, forKey: "Sound")
     } else {
-        soundOn = prefs.boolForKey("Sound")
+        soundOn = prefs.bool(forKey: "Sound")
     }
-    if (prefs.objectForKey("Wacky") == nil) {
-        prefs.setBool(false, forKey: "Wacky")
+    if (prefs.object(forKey: "Wacky") == nil) {
+        prefs.set(false, forKey: "Wacky")
     } else {
-        isWacky = prefs.boolForKey("Wacky")
+        isWacky = prefs.bool(forKey: "Wacky")
     }
-    if (prefs.objectForKey("Difficulty") == nil) {
-        prefs.setInteger(Difficulty.Easy.rawValue, forKey: "Difficulty")
+    if (prefs.object(forKey: "Difficulty") == nil) {
+        prefs.set(Difficulty.easy.rawValue, forKey: "Difficulty")
     } else {
-        difficulty = prefs.integerForKey("Difficulty")
+        difficulty = prefs.integer(forKey: "Difficulty")
     }
-    if (prefs.objectForKey("Background") == nil) {
+    if (prefs.object(forKey: "Background") == nil) {
         prefs.setValue(Background.bg_blue.rawValue, forKey: "Background")
     } else {
-        background = prefs.stringForKey("Background")!
+        background = prefs.string(forKey: "Background")!
     }
-    if (prefs.objectForKey("CardCover") == nil) {
+    if (prefs.object(forKey: "CardCover") == nil) {
         prefs.setValue(cardBack.cardBack_blue4.rawValue, forKey: "CardCover")
     } else {
-        cardCover = prefs.stringForKey("CardCover")!
+        cardCover = prefs.string(forKey: "CardCover")!
     }
     
     let bg = SKSpriteNode(imageNamed: background)
     bg.anchorPoint = CGPoint.zero
     bg.position = CGPoint.zero
-    bg.size = CGSizeMake(screenWidth, screenHeight)
+    bg.size = CGSize(width: screenWidth, height: screenHeight)
     addChild(bg)
     
     let infoButton = SKSpriteNode(imageNamed: "outerCircle")
     let infoLabel = SKLabelNode(text: "i")
-    infoButton.color = .whiteColor()
+    infoButton.color = .white
     infoButton.colorBlendFactor = 0.75
-    infoLabel.fontColor = .blackColor()
+    infoLabel.fontColor = .black
     infoLabel.fontName = "Marker Felt"
     infoButton.anchorPoint = CGPoint.zero
-    infoButton.position = CGPointMake(screenWidth - 50, screenHeight - 50)
-    infoLabel.position = CGPointMake(infoButton.size.width / 2, infoButton.size.height / 4)
+    infoButton.position = CGPoint(x: screenWidth - 50, y: screenHeight - 50)
+    infoLabel.position = CGPoint(x: infoButton.size.width / 2, y: infoButton.size.height / 4)
     infoButton.name = "infoButton"
     infoLabel.name = "infoLabel"
     addChild(infoButton)
@@ -99,10 +99,10 @@ class GameScene: SKScene {
 
   }
   
-  override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     for touch in touches {
-      let location = touch.locationInNode(self)
-      if let card = nodeAtPoint(location) as? Card {
+      let location = touch.location(in: self)
+      if let card = atPoint(location) as? Card {
         card.zPosition = CardLevel.moving.rawValue
         if touch.tapCount == 2 {
           card.flip()
@@ -114,44 +114,44 @@ class GameScene: SKScene {
         }
         if card.enlarged { return }
         
-        let rotR = SKAction.rotateByAngle(0.15, duration: 0.2)
-        let rotL = SKAction.rotateByAngle(-0.15, duration: 0.2)
+        let rotR = SKAction.rotate(byAngle: 0.15, duration: 0.2)
+        let rotL = SKAction.rotate(byAngle: -0.15, duration: 0.2)
         let cycle = SKAction.sequence([rotR, rotL, rotL, rotR])
-        let wiggle = SKAction.repeatActionForever(cycle)
-        card.runAction(wiggle, withKey: "wiggle")
+        let wiggle = SKAction.repeatForever(cycle)
+        card.run(wiggle, withKey: "wiggle")
         
-        card.removeActionForKey("drop")
-        card.runAction(SKAction.scaleTo(1.3, duration: 0.25), withKey: "pickup")
+        card.removeAction(forKey: "drop")
+        card.run(SKAction.scale(to: 1.3, duration: 0.25), withKey: "pickup")
         print(card.getIcon())
         print(card.cardName)
         }
     }
   }
   
-  override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
     for touch in touches {
-      let location = touch.locationInNode(self)
-      if let card = nodeAtPoint(location) as? Card {
+      let location = touch.location(in: self)
+      if let card = atPoint(location) as? Card {
         if card.enlarged { return }
         card.position = location
       }
     }
   }
   
-  override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     for touch in touches {
-      let location = touch.locationInNode(self)
-      let node = nodeAtPoint(location)
+      let location = touch.location(in: self)
+      let node = atPoint(location)
       if let card = node as? Card {
         if card.enlarged { return }
         
         card.zPosition = CardLevel.board.rawValue
         
-        card.removeActionForKey("wiggle")
-        card.runAction(SKAction.rotateToAngle(0, duration: 0.2), withKey:"rotate")
+        card.removeAction(forKey: "wiggle")
+        card.run(SKAction.rotate(toAngle: 0, duration: 0.2), withKey:"rotate")
         
-        card.removeActionForKey("pickup")
-        card.runAction(SKAction.scaleTo(1.0, duration: 0.25), withKey: "drop")
+        card.removeAction(forKey: "pickup")
+        card.run(SKAction.scale(to: 1.0, duration: 0.25), withKey: "drop")
         
         card.removeFromParent()
         addChild(card)
@@ -162,7 +162,7 @@ class GameScene: SKScene {
           skView.showsFPS = true
           skView.showsNodeCount = true
           skView.ignoresSiblingOrder = false
-          scene.scaleMode = .AspectFill
+          scene.scaleMode = .aspectFill
           skView.presentScene(scene)
       }
     }

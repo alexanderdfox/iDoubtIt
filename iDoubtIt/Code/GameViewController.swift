@@ -39,26 +39,26 @@ class GameViewController: UIViewController {
     skView.showsFPS = true
     skView.showsNodeCount = true
     skView.ignoresSiblingOrder = false
-    scene.scaleMode = .AspectFill
+    scene.scaleMode = .aspectFill
     skView.presentScene(scene)
   }
   
-  override func prefersStatusBarHidden() -> Bool {
+  override var prefersStatusBarHidden : Bool {
     return true
   }
 
-  override func canBecomeFirstResponder() -> Bool {
+  override var canBecomeFirstResponder : Bool {
       return true
   }
   
-  override func motionEnded(motion: UIEventSubtype, withEvent event: UIEvent?) {
-      if motion == .MotionShake {
+  override func motionEnded(_ motion: UIEventSubtype, with event: UIEvent?) {
+      if motion == .motionShake {
           for card in deck.gameDeck as NSArray as! [Card] {
-              let myX = (CGFloat(arc4random()) % (screenWidth - 50)) + 25
-              let myY = (CGFloat(arc4random()) % (screenHeight - 50)) + 25
+              let myX = (CGFloat(arc4random()).truncatingRemainder(dividingBy: (screenWidth - 50))) + 25
+              let myY = (CGFloat(arc4random()).truncatingRemainder(dividingBy: (screenHeight - 50))) + 25
               let myPoint = CGPoint.init(x: myX, y: myY)
-              let cardMove = SKAction.moveTo(myPoint, duration: 1.0)
-              card.runAction(cardMove)
+              let cardMove = SKAction.move(to: myPoint, duration: 1.0)
+              card.run(cardMove)
           }
       }
   }

@@ -27,13 +27,13 @@ enum CardType :NSString {
   Spades,
   Clubs,
   Diamonds,
-  NOSUIT
+  NoSuit
 
   static let allValues = [Hearts,
                           Spades,
                           Clubs,
                           Diamonds,
-                          NOSUIT]
+                          NoSuit]
 }
 
 enum Value :NSString {
@@ -125,7 +125,7 @@ class Card : SKSpriteNode {
     self.value = value
     backTexture = SKTexture(imageNamed: cardCover)
     
-    if (value != .Joker || cardType != .NOSUIT) {
+    if (value != .Joker || cardType != .NoSuit) {
         cardName = String(format: "%@of%@", value.rawValue, cardType.rawValue)
     }
     else {
@@ -135,39 +135,39 @@ class Card : SKSpriteNode {
     frontTexture = SKTexture(imageNamed: cardName)
     largeTextureFilename = cardName
 
-    super.init(texture: frontTexture, color: .clearColor(), size: frontTexture.size())
+    super.init(texture: frontTexture, color: .clear, size: frontTexture.size())
   }
   
   func flip() {
-    let firstHalfFlip = SKAction.scaleXTo(0.0, duration: 0.4)
-    let secondHalfFlip = SKAction.scaleXTo(1.0, duration: 0.4)
+    let firstHalfFlip = SKAction.scaleX(to: 0.0, duration: 0.4)
+    let secondHalfFlip = SKAction.scaleX(to: 1.0, duration: 0.4)
     
     setScale(1.0)
     
     if faceUp {
-      runAction(firstHalfFlip) {
+      run(firstHalfFlip, completion: {
         self.texture = self.backTexture
         
-        self.runAction(secondHalfFlip)
-      }
+        self.run(secondHalfFlip)
+      }) 
     } else {
-      runAction(firstHalfFlip) {
+      run(firstHalfFlip, completion: {
         self.texture = self.frontTexture
         
-        self.runAction(secondHalfFlip)
-      }
+        self.run(secondHalfFlip)
+      }) 
     }
     faceUp = !faceUp
   }
   
   func enlarge() {
     if enlarged {
-      let slide = SKAction.moveTo(savedPosition, duration:0.3)
-      let scaleDown = SKAction.scaleTo(1.0, duration:0.3)
-      runAction(SKAction.group([slide, scaleDown])) {
+      let slide = SKAction.move(to: savedPosition, duration:0.3)
+      let scaleDown = SKAction.scale(to: 1.0, duration:0.3)
+      run(SKAction.group([slide, scaleDown]), completion: {
         self.enlarged = false
         self.zPosition = CardLevel.board.rawValue
-      }
+      }) 
     } else {
       enlarged = true
       savedPosition = position
@@ -185,16 +185,16 @@ class Card : SKSpriteNode {
         removeAllActions()
         zRotation = 0
         let newPosition = CGPoint(x: parent.frame.midX, y: parent.frame.midY)
-        let slide = SKAction.moveTo(newPosition, duration:0.3)
-        let scaleUp = SKAction.scaleTo(5.0, duration:0.3)
-        runAction(SKAction.group([slide, scaleUp]))
+        let slide = SKAction.move(to: newPosition, duration:0.3)
+        let scaleUp = SKAction.scale(to: 5.0, duration:0.3)
+        run(SKAction.group([slide, scaleUp]))
       }
     }
   }
     
     func getIcon() -> String {
         switch (value, cardType) {
-        case (.Joker, .NOSUIT): return "🃏"
+        case (.Joker, .NoSuit): return "🃏"
         case (.Joker, .Hearts): return "🃏♥️"
         case (.Joker, .Spades): return "🃏♠️"
         case (.Joker, .Clubs): return "🃏♣️"
