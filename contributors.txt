@@ -1,0 +1,2 @@
+Alex Fox - Convert from objective c to swift and wrote about half the objective-c
+Chris Drake - wrote about half the original objective-c code
