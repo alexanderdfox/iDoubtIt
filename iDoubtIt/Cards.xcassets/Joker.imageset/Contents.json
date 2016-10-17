@@ -2,11 +2,11 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "cardJoker.png",
       "scale" : "1x"
     },
     {
       "idiom" : "universal",
+      "filename" : "cardJoker.png",
       "scale" : "2x"
     },
     {

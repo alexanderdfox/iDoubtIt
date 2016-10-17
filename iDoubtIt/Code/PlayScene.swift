@@ -1,36 +1,12 @@
-/**
- * Copyright (c) 2016 Razeware LLC
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
+//
+//  GameScene.swift
+//  iDoubtIt
+//
+//  Created by Alexander Fox on 8/30/16.
+//  Copyright © 2016
+//
 
 import SpriteKit
-
-let screenSize: CGRect = UIScreen.main.bounds
-let screenWidth = screenSize.width
-let screenHeight = screenSize.height
-let deck = Deck.init(wacky: true)
-var soundOn :Bool = true
-var isWacky :Bool = false
-var difficulty :Int = 0
-var background :String = Background.bg_blue.rawValue
-var cardCover :String = cardBack.cardBack_blue4.rawValue
 
 enum CardLevel :CGFloat {
   case board = 20
@@ -38,36 +14,11 @@ enum CardLevel :CGFloat {
   case enlarged = 60
 }
 
-class GameScene: SKScene {
+class PlayScene: SKScene {
     
   override func didMove(to view: SKView) {
-    let prefs = UserDefaults.standard
     
-    if (prefs.object(forKey: "Sound") == nil) {
-        prefs.set(true, forKey: "Sound")
-    } else {
-        soundOn = prefs.bool(forKey: "Sound")
-    }
-    if (prefs.object(forKey: "Wacky") == nil) {
-        prefs.set(false, forKey: "Wacky")
-    } else {
-        isWacky = prefs.bool(forKey: "Wacky")
-    }
-    if (prefs.object(forKey: "Difficulty") == nil) {
-        prefs.set(Difficulty.easy.rawValue, forKey: "Difficulty")
-    } else {
-        difficulty = prefs.integer(forKey: "Difficulty")
-    }
-    if (prefs.object(forKey: "Background") == nil) {
-        prefs.setValue(Background.bg_blue.rawValue, forKey: "Background")
-    } else {
-        background = prefs.string(forKey: "Background")!
-    }
-    if (prefs.object(forKey: "CardCover") == nil) {
-        prefs.setValue(cardBack.cardBack_blue4.rawValue, forKey: "CardCover")
-    } else {
-        cardCover = prefs.string(forKey: "CardCover")!
-    }
+    let deck = Deck(wacky: isWacky)
     
     let bg = SKSpriteNode(imageNamed: background)
     bg.anchorPoint = CGPoint.zero
@@ -89,12 +40,12 @@ class GameScene: SKScene {
     addChild(infoButton)
     infoButton.addChild(infoLabel)
 
+    deck.naturalShuffle()
     deck.randShuffle()
-    for card in deck.gameDeck as NSArray as! [Card] {
-        card.position.x = screenWidth/2 - card.size.width/2
-        card.position.y = screenHeight/2 - card.size.height/2
-        card.flip()
-        addChild(card as SKSpriteNode)
+    deck.naturalShuffle()
+    for card in deck.gameDeck {
+        card.position = CGPoint(x: screenWidth/2, y: screenHeight/2)
+        addChild(card)
     }
 
   }
@@ -105,15 +56,9 @@ class GameScene: SKScene {
       if let card = atPoint(location) as? Card {
         card.zPosition = CardLevel.moving.rawValue
         if touch.tapCount == 2 {
-          card.flip()
+          card.flipOver()
           return
-        }
-        if touch.tapCount == 3 {
-            card.enlarge()
-            return
-        }
-        if card.enlarged { return }
-        
+        }        
         let rotR = SKAction.rotate(byAngle: 0.15, duration: 0.2)
         let rotL = SKAction.rotate(byAngle: -0.15, duration: 0.2)
         let cycle = SKAction.sequence([rotR, rotL, rotL, rotR])
@@ -132,7 +77,6 @@ class GameScene: SKScene {
     for touch in touches {
       let location = touch.location(in: self)
       if let card = atPoint(location) as? Card {
-        if card.enlarged { return }
         card.position = location
       }
     }
@@ -143,8 +87,6 @@ class GameScene: SKScene {
       let location = touch.location(in: self)
       let node = atPoint(location)
       if let card = node as? Card {
-        if card.enlarged { return }
-        
         card.zPosition = CardLevel.board.rawValue
         
         card.removeAction(forKey: "wiggle")

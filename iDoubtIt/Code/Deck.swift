@@ -1,5 +1,5 @@
 //
-//  SettingsMenu.swift
+//  Deck.swift
 //  iDoubtIt
 //
 //  Created by Alexander Fox on 8/30/16.
@@ -8,52 +8,66 @@
 
 import SpriteKit
 
-class Deck : NSObject {
+class Deck {
     
-    var gameDeck = NSMutableArray()
+    var gameDeck = [Card]()
     
     init(wacky: Bool) {
         var card :Card
+        let facedUp = false
         if !wacky {
-            for suit in CardType.allValues {
+            for s in Suit.allValues {
                 for value in Value.allValues {
-                    if (suit != .NoSuit && value != .Joker) {
-                        card = Card(cardType: suit, value: value)
-                        card.position = CGPoint(x: screenWidth/2,y: screenHeight/2)
-                        gameDeck.add(card)
+                    if (s != .NoSuit && value != .Joker) {
+                        card = Card(suit: s, value: value, faceUp: facedUp)
+                        gameDeck.append(card)
                     }
                 }
             }
         }
         else {
-            for suit in CardType.allValues {
+            for s in Suit.allValues {
                 for value in Value.allValues {
-                    if (suit != .NoSuit && value != .Joker) {
-                        card = Card(cardType: suit, value: value)
-                        card.position = CGPoint(x: screenWidth/2,y: screenHeight/2)
-                        gameDeck.add(card)
-                    } else if (suit == .NoSuit && value != .Joker) {
-                        card = Card(cardType: suit, value: .Joker)
-                        card.position = CGPoint(x: screenWidth/2,y: screenHeight/2)
-                        gameDeck.add(card)
+                    if (s != .NoSuit && value != .Joker) {
+                        card = Card(suit: s, value: value, faceUp: facedUp)
+                        gameDeck.append(card)
+                    } else if (s == .NoSuit && value != .Joker) {
+                        card = Card(suit: s, value: .Joker, faceUp: facedUp)
+                        gameDeck.append(card)
                     }
                 }
             }
         }
-        super.init()
     }
     
     func randShuffle() {
         
-        let shuffeled = NSMutableArray()
+        var shuffeled = [Card]()
         let originalDeckSize = gameDeck.count
 
         while shuffeled.count < originalDeckSize {
-            let r = Int(arc4random() % UInt32(gameDeck.count))
-            shuffeled.add(gameDeck[r])
-            gameDeck.removeObject(at: r)
+            let r = Int(arc4random_uniform(UInt32(gameDeck.count)))
+            shuffeled.append(gameDeck[r])
+            gameDeck.remove(at: r)
         }
         gameDeck = shuffeled
     }
     
+    func naturalShuffle() {
+        let halfd = gameDeck.count / 2
+        var halfDeck = [Card]()
+        var shuffeled = [Card]()
+        for _ in 0..<halfd {
+            halfDeck.append(gameDeck[0])
+            gameDeck.remove(at: 0)
+        }
+        for _ in 0..<halfd {
+            shuffeled.append(halfDeck[0])
+            halfDeck.remove(at: 0)
+            shuffeled.append(gameDeck[0])
+            gameDeck.remove(at: 0)
+        }
+        gameDeck = shuffeled
+    }
+
 }

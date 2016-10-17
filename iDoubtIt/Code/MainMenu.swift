@@ -1,5 +1,5 @@
 //
-//  MainMenu.swift
+//  Game.swift
 //  iDoubtIt
 //
 //  Created by Alexander Fox on 8/30/16.
@@ -8,9 +8,17 @@
 
 import SpriteKit
 
+let screenSize: CGRect = UIScreen.main.bounds
+let screenWidth = screenSize.width
+let screenHeight = screenSize.height
+let prefs = UserDefaults.standard
+
 class MainMenu: SKScene  {
-    
+   
     override func didMove(to view: SKView) {
+        
+        Pref().updateVars()
+
         let bg = SKSpriteNode(imageNamed: background)
         bg.anchorPoint = CGPoint.zero
         bg.position = CGPoint.zero
@@ -23,7 +31,7 @@ class MainMenu: SKScene  {
         playButton.colorBlendFactor = 1
         playLabel.fontName = "MarkerFelt"
         playButton.anchorPoint = CGPoint.zero
-        playButton.position = CGPoint(x: screenHeight/4, y: screenWidth/2)
+        playButton.position = CGPoint(x: screenWidth / 2 - (playButton.size.width * 1.5), y: screenHeight / 2 - playButton.size.height / 2)
         playLabel.position = CGPoint(x: playButton.size.width / 2, y: playButton.size.height / 4 + 5)
         playButton.name = "playButton"
         playLabel.name = "playLabel"
@@ -36,7 +44,7 @@ class MainMenu: SKScene  {
         settingsButton.colorBlendFactor = 1
         settingsLabel.fontName = "MarkerFelt"
         settingsButton.anchorPoint = CGPoint.zero
-        settingsButton.position = CGPoint(x: screenHeight/4 * 3, y: screenWidth/2)
+        settingsButton.position = CGPoint(x: screenWidth / 4 + (settingsButton.size.width * 1.5), y: playButton.position.y)
         settingsLabel.position = CGPoint(x: playButton.size.width / 2, y: playButton.size.height / 4 + 5)
         settingsButton.name = "settingsButton"
         settingsLabel.name = "settingsLabel"
@@ -66,7 +74,7 @@ class MainMenu: SKScene  {
             let location = touch.location(in: self)
             let node = atPoint(location)
             if (node.name == "playButton" || node.name == "playLabel") {
-                let scene = GameScene(size: CGSize(width: screenWidth, height: screenHeight))
+                let scene = PlayScene(size: CGSize(width: screenWidth, height: screenHeight))
                 let skView = view! as SKView
                 skView.showsFPS = true
                 skView.showsNodeCount = true

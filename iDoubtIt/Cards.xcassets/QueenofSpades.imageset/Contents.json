@@ -2,11 +2,11 @@
   "images" : [
     {
       "idiom" : "universal",
-      "filename" : "cardSpadesQ.png",
       "scale" : "1x"
     },
     {
       "idiom" : "universal",
+      "filename" : "cardSpadesQ.png",
       "scale" : "2x"
     },
     {

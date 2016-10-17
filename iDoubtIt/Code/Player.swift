@@ -37,7 +37,7 @@ struct determineBluff {
     let Hard = (50,25,4)
 }
 
-class Player : SKNode {
+class Player :SKNode {
     
     fileprivate var playerHand = NSMutableArray()
     fileprivate var NoCardsBluff = noCardsBluff.init()
@@ -99,7 +99,7 @@ class Player : SKNode {
     
     func playHand(_ value: Value, diff: Difficulty) -> NSMutableArray {
         let matchingCardsInHand = findCardsInHand(value)
-//        let randomCads = NSIndexSet()
+//        let randomCards = NSIndexSet()
         if (isWacky && (playerHand.count > matchingCardsInHand.count)) {
             switch diff{
             case .easy:

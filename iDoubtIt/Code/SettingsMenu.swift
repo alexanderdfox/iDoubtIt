@@ -8,7 +8,7 @@
 
 import SpriteKit
 
-class SettingsMenu: SKScene  {
+class SettingsMenu :SKScene  {
     
     fileprivate var wackyModeBtn :SKSpriteNode
     fileprivate var soundBtn :SKSpriteNode
@@ -39,7 +39,7 @@ class SettingsMenu: SKScene  {
         addChild(backButton)
         
         let wackyLabel = SKLabelNode(text: "Wacky")
-        wackyModeBtn.position = CGPoint(x: screenHeight/2, y: screenWidth/2)
+        wackyModeBtn.position = CGPoint(x: screenWidth / 2 - (wackyModeBtn.size.width * 1.5), y: screenHeight / 2 - wackyModeBtn.size.height / 2)
         wackyModeBtn.anchorPoint = CGPoint.zero
         wackyLabel.position = CGPoint(x: wackyModeBtn.size.width / 2, y: wackyModeBtn.size.height / 4 + 5)
         wackyLabel.fontName = "MarkerFelt"
@@ -56,7 +56,7 @@ class SettingsMenu: SKScene  {
         wackyModeBtn.addChild(wackyLabel)
         
         let soundLabel = SKLabelNode(text: "Sound")
-        soundBtn.position = CGPoint(x: screenHeight/4, y: screenWidth/2)
+        soundBtn.position = CGPoint(x: screenWidth / 4 + (soundBtn.size.width * 1.5), y: screenHeight / 2 - soundBtn.size.height / 2)
         soundBtn.anchorPoint = CGPoint.zero
         soundLabel.position = CGPoint(x: soundBtn.size.width / 2, y: soundBtn.size.height / 4 + 5)
         soundLabel.fontName = "MarkerFelt"
