@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import Foundation
+import SpriteKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

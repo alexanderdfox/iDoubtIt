@@ -6,6 +6,7 @@
 //  Copyright © 2016
 //
 
+import Foundation
 import SpriteKit
 
 enum Suit :String {
@@ -23,7 +24,7 @@ enum Suit :String {
                            NoSuit ]
 }
 
-enum Value :String {
+enum Value :Int {
     case Ace,
     Two,
     Three,

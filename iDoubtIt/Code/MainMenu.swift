@@ -6,15 +6,19 @@
 //  Copyright © 2016
 //
 
+import Foundation
 import SpriteKit
-
-let screenSize: CGRect = UIScreen.main.bounds
-let screenWidth = screenSize.width
-let screenHeight = screenSize.height
-let prefs = UserDefaults.standard
 
 class MainMenu: SKScene  {
    
+    override init() {
+        super.init(size: screenSize.size)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func didMove(to view: SKView) {
         
         Pref().updateVars()
@@ -25,31 +29,13 @@ class MainMenu: SKScene  {
         bg.size = CGSize(width: screenWidth, height: screenHeight)
         addChild(bg)
         
-        let playButton = SKSpriteNode(imageNamed: "button1")
-        let playLabel = SKLabelNode(text: "Play")
-        playButton.color = .blue
-        playButton.colorBlendFactor = 1
-        playLabel.fontName = "MarkerFelt"
-        playButton.anchorPoint = CGPoint.zero
+        let playButton = button(image: "button1", name: "Play", color: .black, label: "Play")
         playButton.position = CGPoint(x: screenWidth / 2 - (playButton.size.width * 1.5), y: screenHeight / 2 - playButton.size.height / 2)
-        playLabel.position = CGPoint(x: playButton.size.width / 2, y: playButton.size.height / 4 + 5)
-        playButton.name = "playButton"
-        playLabel.name = "playLabel"
         addChild(playButton)
-        playButton.addChild(playLabel)
         
-        let settingsButton = SKSpriteNode(imageNamed: "button1")
-        let settingsLabel = SKLabelNode(text: "Settings")
-        settingsButton.color = .purple
-        settingsButton.colorBlendFactor = 1
-        settingsLabel.fontName = "MarkerFelt"
-        settingsButton.anchorPoint = CGPoint.zero
+        let settingsButton = button(image: "button1", name: "Settings", color: .black, label: "Settings")
         settingsButton.position = CGPoint(x: screenWidth / 4 + (settingsButton.size.width * 1.5), y: playButton.position.y)
-        settingsLabel.position = CGPoint(x: playButton.size.width / 2, y: playButton.size.height / 4 + 5)
-        settingsButton.name = "settingsButton"
-        settingsLabel.name = "settingsLabel"
         addChild(settingsButton)
-        settingsButton.addChild(settingsLabel)
         
     }
     
@@ -73,23 +59,21 @@ class MainMenu: SKScene  {
         for touch in touches {
             let location = touch.location(in: self)
             let node = atPoint(location)
-            if (node.name == "playButton" || node.name == "playLabel") {
-                let scene = PlayScene(size: CGSize(width: screenWidth, height: screenHeight))
-                let skView = view! as SKView
-                skView.showsFPS = true
-                skView.showsNodeCount = true
-                skView.ignoresSiblingOrder = false
+            if (node.name == "Playbtn" || node.name == "Playlabel") {
+                let scene = PlayScene()
+                view?.showsFPS = true
+                view?.showsNodeCount = true
+                view?.ignoresSiblingOrder = false
                 scene.scaleMode = .aspectFill
-                skView.presentScene(scene)
+                view?.presentScene(scene)
             }
-            if (node.name == "settingsButton" || node.name == "settingsLabel") {
+            if (node.name == "Settingsbtn" || node.name == "Settingslabel") {
                 let scene = SettingsMenu()
-                let skView = view! as SKView
-                skView.showsFPS = true
-                skView.showsNodeCount = true
-                skView.ignoresSiblingOrder = false
+                view?.showsFPS = true
+                view?.showsNodeCount = true
+                view?.ignoresSiblingOrder = false
                 scene.scaleMode = .aspectFill
-                skView.presentScene(scene)
+                view?.presentScene(scene)
             }
         }
     }

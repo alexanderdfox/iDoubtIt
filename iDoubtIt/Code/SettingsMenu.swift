@@ -6,16 +6,12 @@
 //  Copyright © 2016
 //
 
+import Foundation
 import SpriteKit
 
 class SettingsMenu :SKScene  {
     
-    fileprivate var wackyModeBtn :SKSpriteNode
-    fileprivate var soundBtn :SKSpriteNode
-
     override init() {
-        wackyModeBtn = SKSpriteNode(imageNamed: "button0")
-        soundBtn = SKSpriteNode(imageNamed: "button0")
         super.init(size: screenSize.size)
     }
     
@@ -30,47 +26,31 @@ class SettingsMenu :SKScene  {
         bg.size = CGSize(width: screenWidth, height: screenHeight)
         addChild(bg)
         
-        let backButton = SKSpriteNode(imageNamed: "back")
-        backButton.color = .white
-        backButton.colorBlendFactor = 1
-        backButton.anchorPoint = CGPoint.zero
-        backButton.position = CGPoint(x: 25, y: screenHeight - 50)
-        backButton.name = "backButton"
+        let backButton = button(image: "back", name: "Back", color: .white, label: "")
+        backButton.position = CGPoint(x: 10, y: screenHeight - 50)
         addChild(backButton)
         
-        let wackyLabel = SKLabelNode(text: "Wacky")
-        wackyModeBtn.position = CGPoint(x: screenWidth / 2 - (wackyModeBtn.size.width * 1.5), y: screenHeight / 2 - wackyModeBtn.size.height / 2)
-        wackyModeBtn.anchorPoint = CGPoint.zero
-        wackyLabel.position = CGPoint(x: wackyModeBtn.size.width / 2, y: wackyModeBtn.size.height / 4 + 5)
-        wackyLabel.fontName = "MarkerFelt"
+        let wackyBtn = button(image: "button1", name: "Wacky", color: .black, label: "Wacky")
+        wackyBtn.position = CGPoint(x: screenWidth / 2 - (wackyBtn.size.width * 1.5), y: screenHeight / 2 - wackyBtn.size.height / 2)
+        wackyBtn.anchorPoint = CGPoint.zero
         if isWacky {
-            wackyModeBtn.color = .green
+            wackyBtn.color = .green
         }
         else {
-            wackyModeBtn.color = .red
+            wackyBtn.color = .red
         }
-        wackyModeBtn.colorBlendFactor = 1
-        wackyModeBtn.name = "wackyMode"
-        wackyLabel.name = "wackyMode"
-        addChild(wackyModeBtn)
-        wackyModeBtn.addChild(wackyLabel)
+        addChild(wackyBtn)
         
-        let soundLabel = SKLabelNode(text: "Sound")
+        let soundBtn = button(image: "button1", name: "Sound", color: .black, label: "Sound")
         soundBtn.position = CGPoint(x: screenWidth / 4 + (soundBtn.size.width * 1.5), y: screenHeight / 2 - soundBtn.size.height / 2)
         soundBtn.anchorPoint = CGPoint.zero
-        soundLabel.position = CGPoint(x: soundBtn.size.width / 2, y: soundBtn.size.height / 4 + 5)
-        soundLabel.fontName = "MarkerFelt"
         if soundOn {
             soundBtn.color = .green
         }
         else {
             soundBtn.color = .red
         }
-        soundBtn.colorBlendFactor = 1
-        soundBtn.name = "soundButton"
-        soundLabel.name = "soundButton"
         addChild(soundBtn)
-        soundBtn.addChild(soundLabel)
         
     }
     
@@ -93,34 +73,47 @@ class SettingsMenu :SKScene  {
         for touch in touches {
             let location = touch.location(in: self)
             let node = atPoint(location)
-            if (node.name == "backButton") {
-               let scene = MainMenu(size: CGSize(width: screenWidth, height: screenHeight))
-               let skView = view! as SKView
-               skView.showsFPS = true
-               skView.showsNodeCount = true
-               skView.ignoresSiblingOrder = false
-               scene.scaleMode = .aspectFill
-               skView.presentScene(scene)
+            if (node.name == "Backbtn") {
+                let scene = MainMenu()
+                view?.showsFPS = true
+                view?.showsNodeCount = true
+                view?.ignoresSiblingOrder = false
+                scene.scaleMode = .aspectFill
+                view?.presentScene(scene)
             }
-            if (node.name == "wackyMode") {
+            if (node.name == "Wackybtn" || node.name == "Wackylabel") {
+                var btn = SKSpriteNode()
+                if node.name == "Wackybtn" {
+                    btn = node as! SKSpriteNode
+                }
+                if node.name == "Wackylabel" {
+                    btn = node.parent as! SKSpriteNode
+                }
                 if isWacky {
                     prefs.set(false, forKey: "Wacky")
-                    wackyModeBtn.color = .red
+                    btn.color = .red
                 }
                 else {
                     prefs.set(true, forKey: "Wacky")
-                    wackyModeBtn.color = .green
+                    btn.color = .green
                 }
                 isWacky = prefs.bool(forKey: "Wacky")
             }
-            if (node.name == "soundButton") {
+            if (node.name == "Soundbtn" || node.name == "Soundlabel") {
+                var btn = SKSpriteNode()
+                if node.name == "Soundbtn" {
+                    btn = node as! SKSpriteNode
+                }
+                if node.name == "Soundlabel" {
+                    btn = node.parent as! SKSpriteNode
+                }
                 if soundOn {
                     prefs.set(false, forKey: "Sound")
-                    soundBtn.color = .red
+                    btn.color = .red
                 }
                 else {
                     prefs.set(true, forKey: "Sound")
-                    soundBtn.color = .green
+                    btn.color = .green
                 }
                 soundOn = prefs.bool(forKey: "Sound")
             }

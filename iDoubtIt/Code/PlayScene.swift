@@ -6,6 +6,7 @@
 //  Copyright © 2016
 //
 
+import Foundation
 import SpriteKit
 
 enum CardLevel :CGFloat {
@@ -15,6 +16,14 @@ enum CardLevel :CGFloat {
 }
 
 class PlayScene: SKScene {
+    
+    override init() {
+        super.init(size: screenSize.size)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
   override func didMove(to view: SKView) {
     
@@ -26,19 +35,10 @@ class PlayScene: SKScene {
     bg.size = CGSize(width: screenWidth, height: screenHeight)
     addChild(bg)
     
-    let infoButton = SKSpriteNode(imageNamed: "outerCircle")
-    let infoLabel = SKLabelNode(text: "i")
-    infoButton.color = .white
+    let infoButton = button(image: "outerCircle", name:"Info", color: .white, label: "i")
     infoButton.colorBlendFactor = 0.75
-    infoLabel.fontColor = .black
-    infoLabel.fontName = "Marker Felt"
-    infoButton.anchorPoint = CGPoint.zero
     infoButton.position = CGPoint(x: screenWidth - 50, y: screenHeight - 50)
-    infoLabel.position = CGPoint(x: infoButton.size.width / 2, y: infoButton.size.height / 4)
-    infoButton.name = "infoButton"
-    infoLabel.name = "infoLabel"
     addChild(infoButton)
-    infoButton.addChild(infoLabel)
 
     deck.naturalShuffle()
     deck.randShuffle()
@@ -98,15 +98,14 @@ class PlayScene: SKScene {
         card.removeFromParent()
         addChild(card)
       }
-      if (node.name == "infoButton" || node.name == "infoLabel") {
-          let scene = MainMenu(size: CGSize(width: screenWidth, height: screenHeight))
-          let skView = view! as SKView
-          skView.showsFPS = true
-          skView.showsNodeCount = true
-          skView.ignoresSiblingOrder = false
-          scene.scaleMode = .aspectFill
-          skView.presentScene(scene)
-      }
+        if (node.name == "Infobtn" || node.name == "Infolabel") {
+            let scene = MainMenu()
+            view?.showsFPS = true
+            view?.showsNodeCount = true
+            view?.ignoresSiblingOrder = false
+            scene.scaleMode = .aspectFill
+            view?.presentScene(scene)
+        }
     }
   }
 }

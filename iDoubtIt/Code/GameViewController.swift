@@ -6,7 +6,7 @@
 //  Copyright © 2016
 //
 
-import UIKit
+import Foundation
 import SpriteKit
 
 enum Background :String {
@@ -19,7 +19,7 @@ class GameViewController: UIViewController {
     super.viewDidLoad()
     self.becomeFirstResponder()
     
-    let scene = MainMenu(size: CGSize(width: screenWidth, height: screenHeight))
+    let scene = MainMenu()
     let skView = self.view as! SKView
     
     skView.showsFPS = true

@@ -6,6 +6,7 @@
 //  Copyright © 2016
 //
 
+import Foundation
 import SpriteKit
 
 class Deck {
@@ -50,6 +51,7 @@ class Deck {
             shuffeled.append(gameDeck[r])
             gameDeck.remove(at: r)
         }
+        gameDeck.removeAll()
         gameDeck = shuffeled
     }
     
@@ -67,6 +69,7 @@ class Deck {
             shuffeled.append(gameDeck[0])
             gameDeck.remove(at: 0)
         }
+        gameDeck.removeAll()
         gameDeck = shuffeled
     }
 

@@ -7,12 +7,17 @@
 //
 
 import Foundation
+import SpriteKit
 
 var soundOn = Pref().Sound()
 var isWacky = Pref().Wacky()
 var difficulty = Pref().LevelDifficulty()
 var background = Pref().BackgroundImage()
 var cardCover = Pref().CardCover()
+let screenSize: CGRect = UIScreen.main.bounds
+let screenWidth = screenSize.width
+let screenHeight = screenSize.height
+let prefs = UserDefaults.standard
 
 struct Pref {
     
