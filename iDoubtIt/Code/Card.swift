@@ -121,6 +121,7 @@ class Card : SKSpriteNode {
         curTexture = backTexture
     }
     super.init(texture: curTexture, color: .clear, size: curTexture.size())
+    name = cardName
   }
   
   func flipOver() {

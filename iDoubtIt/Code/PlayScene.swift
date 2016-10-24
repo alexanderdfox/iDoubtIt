@@ -40,14 +40,35 @@ class PlayScene: SKScene {
     infoButton.position = CGPoint(x: screenWidth - 50, y: screenHeight - 50)
     addChild(infoButton)
 
+    let human = Player(human: true, playerName: "Human", level: Difficulty.easy)
+    let ai1 = Player(human: false, playerName: "AI 1", level: Difficulty.easy)
+    let ai2 = Player(human: false, playerName: "AI 2", level: Difficulty.easy)
+    let ai3 = Player(human: false, playerName: "AI 3", level: Difficulty.easy)
+    
+    let players = [human,ai1,ai2,ai3]
+//    let aiplayers = [ai1,ai2,ai3]
+    
     deck.naturalShuffle()
     deck.randShuffle()
     deck.naturalShuffle()
+    
+    var p = 0
     for card in deck.gameDeck {
-        card.position = CGPoint(x: screenWidth/2, y: screenHeight/2)
-        addChild(card)
+        players[p%4].addCard(card: card)
+        players[p%4].position.x = screenWidth / 2
+        players[p%4].position.y = screenHeight - CGFloat(p * 10)
+        card.position = CGPoint(x: p * 10, y: 0)
+        p += 1
     }
-
+    
+    for player in players {
+        print(player.name)
+        for c in 0...12 {
+            print(player.playerHand[c].getIcon())
+        }
+        addChild(player)
+    }
+    
   }
   
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -69,18 +90,19 @@ class PlayScene: SKScene {
         card.run(SKAction.scale(to: 1.3, duration: 0.25), withKey: "pickup")
         print(card.getIcon())
         print(card.cardName)
+        print(card.parent?.name)
         }
     }
   }
   
-  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-    for touch in touches {
-      let location = touch.location(in: self)
-      if let card = atPoint(location) as? Card {
-        card.position = location
-      }
-    }
-  }
+//  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+//    for touch in touches {
+//      let location = touch.location(in: self)
+//      if let card = atPoint(location) as? Card {
+//        card.position = location
+//      }
+//    }
+//  }
   
   override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     for touch in touches {
@@ -94,9 +116,9 @@ class PlayScene: SKScene {
         
         card.removeAction(forKey: "pickup")
         card.run(SKAction.scale(to: 1.0, duration: 0.25), withKey: "drop")
-        
-        card.removeFromParent()
-        addChild(card)
+//fix bug here
+//        card.removeFromParent()
+//        addChild(card)
       }
         if (node.name == "Infobtn" || node.name == "Infolabel") {
             let scene = MainMenu()

@@ -38,7 +38,7 @@ struct determineBluff {
     let Hard :(Int,Int,Int) = (50,25,4)
 }
 
-class Player :SKNode {
+class Player :SKSpriteNode {
     
     var playerHand = [Card]()
     var playThisMany :Float
@@ -62,15 +62,21 @@ class Player :SKNode {
             default: print("‼️")
             }
         }
-        super.init()
+        let texture = SKTexture(imageNamed: "bg_blue")
+        let size = CGSize(width: screenWidth, height: 190)
+        super.init(texture: texture, color: .clear, size: size)
+        name = playerName
     }
     
     func addCard(card: Card) {
         playerHand.append(card)
+        addChild(card)
     }
     
     func addCards(cards: [Card]) {
-        playerHand.append(contentsOf: cards)
+        for card in cards {
+            addCard(card: card)
+        }
     }
     
     func hasCards() -> Bool {
@@ -183,7 +189,7 @@ class Player :SKNode {
         return randomCards
     }
     
-//    func playHand(currValue: Value) -> [Card] {
+//    func playHand(currValue: Value) {
 //
 //        var matchingCards = findCardsInHand(value: currValue)
 //        var cardsToRemove = matchingCards
@@ -196,32 +202,248 @@ class Player :SKNode {
 //            //edit this code
 //        }
 //
-//        playerHand.remove(at: <#T##Int#>)???????
+//        playerHand.remove(at: currValue.rawValue)
 //        
 //        if cardsToPlay.count == 0 {
 //            print("Error: no cards to play")
 //        }
 //        
-//        return cardsToPlay
+//
 //    }
     
-//    func callDoubt(lastValue :Value, numCardsPlayed: Int, lastPlayerCount :Int ) {
-//        var haveCards = findCardsInHand(value: lastValue)
-//        var willCallDoubt = false
-//        
-//        if isWacky {
-//            //edit this code
-//        }
-//        else {
-//            //edit this code
-//        }
-//        
-//        if willCallDoubt {
-//            print("\(name) called Doubt")
-//        }
-//        else {
-//            print("\(name) did not call Doubt")
-//        }
-//    }
+    func callDoubt(lastValue :Value, numCardsPlayed: Int, lastPlayerCount :Int ) {
+        let haveCards = findCardsInHand(value: lastValue)
+        var willCallDoubt = false
+        
+        if isWacky {
+            if haveCards.count + numCardsPlayed > 4 {
+                if arc4random_uniform(101) < 75 {
+                    willCallDoubt = true
+                }
+            }
+            else {
+                switch difficulty {
+                case Difficulty.easy.rawValue:
+                    if numCardsPlayed + lastPlayerCount == 13 {
+                        if numCardsPlayed >= 3 {
+                            willCallDoubt = true
+                        }
+                        else {
+                            if Int(arc4random_uniform(101)) < determineBluff().Easy.2 + 10 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    else if lastPlayerCount == 0 {
+                        if numCardsPlayed >= 3 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Easy.0 {
+                                willCallDoubt = true
+                            }
+                            else {
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.1 + 20 {
+                                    willCallDoubt = true
+                                }
+                            }
+                        }
+                        else {
+                            if numCardsPlayed == 4 {
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.2 {
+                                    willCallDoubt = true
+                                }
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.1 {
+                                    willCallDoubt = true
+                                }
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.0 {
+                                    willCallDoubt = true
+                                }
+                            }
+                        }
+                    }
+                    break
+                case Difficulty.medium.rawValue:
+                    if numCardsPlayed + lastPlayerCount == 13 {
+                        if numCardsPlayed >= 3 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.2 {
+                                willCallDoubt = true
+                            }
+                        }
+                        else {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.1 + 10 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    else if lastPlayerCount == 0 {
+                        if numCardsPlayed >= 3 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.1 + 20 {
+                                willCallDoubt = true
+                            }
+                        }
+                        else {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.0 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    else {
+                        if numCardsPlayed == 4 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.2 {
+                                willCallDoubt = true
+                            }
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.1 {
+                                willCallDoubt = true
+                            }
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.0 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    break
+                case Difficulty.hard.rawValue:
+                    if numCardsPlayed + lastPlayerCount == 13 {
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.1 + 8 {
+                            willCallDoubt = true
+                        }
+                    }
+                    else if lastPlayerCount == 0 {
+                        if Int(arc4random_uniform(101)) < determineBluff().Easy.1 + 8 {
+                            willCallDoubt = true
+                        }
+                    }
+                    else {
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.2 {
+                            willCallDoubt = true
+                        }
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.1 {
+                            willCallDoubt = true
+                        }
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.0 {
+                            willCallDoubt = true
+                        }
+                    }
+                    break
+                default:
+                    break
+                }
+            }
+        }
+        else {
+            if haveCards.count + numCardsPlayed > 4 {
+                willCallDoubt = true
+            }
+            else {
+                switch difficulty {
+                case Difficulty.easy.rawValue:
+                    if numCardsPlayed + lastPlayerCount == 13 {
+                        if numCardsPlayed >= 3 {
+                            willCallDoubt = true
+                        }
+                        else {
+                            if Int(arc4random_uniform(101)) < determineBluff().Easy.2 + 10 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    else if lastPlayerCount == 0 {
+                        if numCardsPlayed >= 3 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Easy.0 {
+                                willCallDoubt = true
+                            }
+                            else {
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.1 + 20 {
+                                    willCallDoubt = true
+                                }
+                            }
+                        }
+                        else {
+                            if numCardsPlayed == 4 {
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.2 {
+                                    willCallDoubt = true
+                                }
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.1 {
+                                    willCallDoubt = true
+                                }
+                                if Int(arc4random_uniform(101)) < determineBluff().Easy.0 {
+                                    willCallDoubt = true
+                                }
+                            }
+                        }
+                    }
+                    break
+                case Difficulty.medium.rawValue:
+                    if numCardsPlayed + lastPlayerCount == 13 {
+                        if numCardsPlayed >= 3 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.2 {
+                                willCallDoubt = true
+                            }
+                        }
+                        else {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.1 + 10 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    else if lastPlayerCount == 0 {
+                        if numCardsPlayed >= 3 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.1 + 20 {
+                                willCallDoubt = true
+                            }
+                        }
+                        else {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.0 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    else {
+                        if numCardsPlayed == 4 {
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.2 {
+                                willCallDoubt = true
+                            }
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.1 {
+                                willCallDoubt = true
+                            }
+                            if Int(arc4random_uniform(101)) < determineBluff().Medium.0 {
+                                willCallDoubt = true
+                            }
+                        }
+                    }
+                    break
+                case Difficulty.hard.rawValue:
+                    if numCardsPlayed + lastPlayerCount == 13 {
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.1 + 8 {
+                            willCallDoubt = true
+                        }
+                    }
+                    else if lastPlayerCount == 0 {
+                        if Int(arc4random_uniform(101)) < determineBluff().Easy.1 + 8 {
+                            willCallDoubt = true
+                        }
+                    }
+                    else {
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.2 {
+                            willCallDoubt = true
+                        }
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.1 {
+                            willCallDoubt = true
+                        }
+                        if Int(arc4random_uniform(101)) < determineBluff().Hard.0 {
+                            willCallDoubt = true
+                        }
+                    }
+                    break
+                default:
+                    break
+                }
+            }
+        }
+        
+        if willCallDoubt {
+            print("\(name) called Doubt")
+        }
+        else {
+            print("\(name) did not call Doubt")
+        }
+    }
     
 }
