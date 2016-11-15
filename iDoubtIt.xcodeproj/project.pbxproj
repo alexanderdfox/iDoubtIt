@@ -24,6 +24,7 @@
 		02B5090D1D7A720700B6F9B2 /* MainMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B509051D7A720700B6F9B2 /* MainMenu.swift */; };
 		02B5090E1D7A720700B6F9B2 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B509061D7A720700B6F9B2 /* Player.swift */; };
 		02B5090F1D7A720700B6F9B2 /* SettingsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B509071D7A720700B6F9B2 /* SettingsMenu.swift */; };
+		02C68F011DDAFF130099EAA8 /* DifficultyMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C68F001DDAFF130099EAA8 /* DifficultyMenu.swift */; };
 		02FDD0631DB54869002B819E /* Buttons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02FDD0621DB54869002B819E /* Buttons.swift */; };
 /* End PBXBuildFile section */
 
@@ -46,6 +47,7 @@
 		02B509051D7A720700B6F9B2 /* MainMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MainMenu.swift; path = Code/MainMenu.swift; sourceTree = "<group>"; };
 		02B509061D7A720700B6F9B2 /* Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Player.swift; path = Code/Player.swift; sourceTree = "<group>"; };
 		02B509071D7A720700B6F9B2 /* SettingsMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SettingsMenu.swift; path = Code/SettingsMenu.swift; sourceTree = "<group>"; };
+		02C68F001DDAFF130099EAA8 /* DifficultyMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = DifficultyMenu.swift; path = Code/DifficultyMenu.swift; sourceTree = "<group>"; };
 		02FDD0621DB54869002B819E /* Buttons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Buttons.swift; path = Code/Buttons.swift; sourceTree = "<group>"; };
 		D3EFEB061CD3C43400014542 /* iDoubtIt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iDoubtIt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -84,6 +86,7 @@
 				02B509061D7A720700B6F9B2 /* Player.swift */,
 				02B509071D7A720700B6F9B2 /* SettingsMenu.swift */,
 				02FDD0621DB54869002B819E /* Buttons.swift */,
+				02C68F001DDAFF130099EAA8 /* DifficultyMenu.swift */,
 			);
 			name = Swift;
 			sourceTree = "<group>";
@@ -211,6 +214,7 @@
 				02B5090A1D7A720700B6F9B2 /* Deck.swift in Sources */,
 				02B5090F1D7A720700B6F9B2 /* SettingsMenu.swift in Sources */,
 				02B509081D7A720700B6F9B2 /* AppDelegate.swift in Sources */,
+				02C68F011DDAFF130099EAA8 /* DifficultyMenu.swift in Sources */,
 				02FDD0631DB54869002B819E /* Buttons.swift in Sources */,
 				02B5090E1D7A720700B6F9B2 /* Player.swift in Sources */,
 				02B5090B1D7A720700B6F9B2 /* PlayScene.swift in Sources */,

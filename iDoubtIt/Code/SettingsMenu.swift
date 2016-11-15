@@ -52,6 +52,12 @@ class SettingsMenu :SKScene  {
         }
         addChild(soundBtn)
         
+        let diffbtn = button(image: "button1", name: "Difficulty", color: .black, label: "Difficulty")
+        diffbtn.position = CGPoint(x: screenWidth / 4 + (diffbtn.size.width * 3), y: screenHeight / 2 - diffbtn.size.height / 2)
+        diffbtn.anchorPoint = CGPoint.zero
+        diffbtn.color = .yellow
+        addChild(diffbtn)
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -75,6 +81,14 @@ class SettingsMenu :SKScene  {
             let node = atPoint(location)
             if (node.name == "Backbtn") {
                 let scene = MainMenu()
+                view?.showsFPS = true
+                view?.showsNodeCount = true
+                view?.ignoresSiblingOrder = false
+                scene.scaleMode = .aspectFill
+                view?.presentScene(scene)
+            }
+            if (node.name == "Difficultybrn" || node.name == "Difficultylabel") {
+                let scene = DifficultyMenu()
                 view?.showsFPS = true
                 view?.showsNodeCount = true
                 view?.ignoresSiblingOrder = false
