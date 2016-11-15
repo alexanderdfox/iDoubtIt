@@ -115,7 +115,7 @@ class Card : SKSpriteNode {
     backTexture = SKTexture(imageNamed: cardCover)
     frontTexture = SKTexture(imageNamed: cardName)
     facedUp = faceUp
-    if faceUp {
+    if facedUp {
         curTexture = frontTexture
     } else {
         curTexture = backTexture

@@ -19,13 +19,6 @@ enum Difficulty :Int {
                      hard]
 }
 
-enum player :Int {
-    case humanPlayer = 0,
-    aiPlayerOne = 1,
-    aiPlayerTwo = 2,
-    aiPlayerThree = 3
-}
-
 struct noCardsBluff {
     let Easy :(Int,Int) = (60, 30)
     let Medium :(Int,Int) = (60, 10)
@@ -66,6 +59,7 @@ class Player :SKSpriteNode {
         let size = CGSize(width: screenWidth, height: 190)
         super.init(texture: texture, color: .clear, size: size)
         name = playerName
+        anchorPoint = CGPoint(x: size.width/2, y: size.height/2)
     }
     
     func addCard(card: Card) {
@@ -101,19 +95,17 @@ class Player :SKSpriteNode {
     
     func findCardsInHand(value: Value) -> IndexSet {
         var locations :IndexSet = IndexSet()
-        var card :Card
         var indexes :IndexSet = IndexSet()
         
-        for i in 0...playerHand.count {
-            card = playerHand[i]
+        for c in 0..<playerHand.count {
             if isWacky {
-                if card.value == value {
-                    locations.insert(i)
+                if playerHand[c].value == value {
+                    locations.insert(c)
                 }
             }
             else {
-                if (card.value == value && locations.count <= 3) {
-                    locations.insert(i)
+                if (playerHand[c].value == value && locations.count <= 3) {
+                    locations.insert(c)
                 }
             }
         }
@@ -129,7 +121,7 @@ class Player :SKSpriteNode {
         var locations :IndexSet = IndexSet()
         var random :Int = 0
         var hasFound :Int = 0
-        var howMany = thisMany
+        var howMany :Int = thisMany
         
         if isWacky {
             if howMany + alreadySelected.count > 6 {
@@ -141,27 +133,26 @@ class Player :SKSpriteNode {
                 howMany = 4 - alreadySelected.count
             }
         }
-            
         if alreadySelected.count != 0 {
-            if howMany <= playerHand.count - alreadySelected.count {
+            if howMany <= playerHand.count - howMany {
                 while hasFound < howMany {
                     random = abs(Int(arc4random_uniform(UInt32(playerHand.count))))
-                    if !alreadySelected.contains(random) && locations.contains(random) {
+                    if !alreadySelected.contains(random) && !locations.contains(random) {
                         locations.insert(random)
-                        hasFound += 1
                     }
+                    hasFound += 1
                 }
-                randomCards = locations
+                randomCards = locations as IndexSet
             }
-            else if playerHand.count - alreadySelected.count != 0 {
+            else if playerHand.count - howMany != 0 {
                 while hasFound < playerHand.count {
                     random = abs(Int(arc4random_uniform(UInt32(playerHand.count))))
                     if !locations.contains(random) {
                         locations.insert(random)
-                        hasFound += 1
                     }
+                    hasFound += 1
                 }
-                randomCards = locations
+                randomCards = locations as IndexSet
             }
             else {
                 print("Error: AIPlayer can't find any cards to play.")
@@ -171,12 +162,12 @@ class Player :SKSpriteNode {
             if howMany <= playerHand.count {
                 while hasFound < howMany {
                     random = abs(Int(arc4random_uniform(UInt32(playerHand.count))))
-                    if !alreadySelected.contains(random) && locations.contains(random) {
+                    if !alreadySelected.contains(random) && !locations.contains(random) {
                         locations.insert(random)
-                        hasFound += 1
                     }
+                    hasFound += 1
                 }
-                randomCards = locations
+                randomCards = locations as IndexSet
             }
             else if playerHand.count != 0 {
                 while hasFound < playerHand.count {
@@ -189,27 +180,123 @@ class Player :SKSpriteNode {
         return randomCards
     }
     
-//    func playHand(currValue: Value) {
-//
-//        var matchingCards = findCardsInHand(value: currValue)
-//        var cardsToRemove = matchingCards
-//        var cardsToPlay = cardsToRemove
-//
-//        if isHuman {
-//            //edit this code
-//        }
-//        else {
-//            //edit this code
-//        }
-//
-//        playerHand.remove(at: currValue.rawValue)
-//        
-//        if cardsToPlay.count == 0 {
-//            print("Error: no cards to play")
-//        }
-//        
-//
-//    }
+    func playHand(currValue: Value) -> [Card] {
+
+        let matchingCards :IndexSet = findCardsInHand(value: currValue)
+        var randomCards :IndexSet = findRandomCards(thisMany: 4, alreadySelected: matchingCards)
+        var cardsToRemove :IndexSet = IndexSet()
+        var cardsToPlay = [Card]()
+
+        if !isHuman {
+            if ((isWacky && (matchingCards.count > 0)) && playerHand.count > matchingCards.count) {
+                switch difficulty {
+                case Difficulty.easy.rawValue:
+                    if (Int(arc4random_uniform(100)) <= difficulty) {
+                        if matchingCards.count >= 6 {
+                            randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                        }
+                        else if (cardsToPlay.count < 6 && cardsToPlay.count > 2) {
+                            if (Int(arc4random_uniform(100)) <= difficulty) {
+                                randomCards = findRandomCards(thisMany: 2, alreadySelected: matchingCards)
+                            }
+                            else {
+                                randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                            }
+                        }
+                    }
+                    else {
+                        if (Int(arc4random_uniform(100)) <= difficulty) {
+                            randomCards = findRandomCards(thisMany: 3, alreadySelected: matchingCards)
+                        }
+                        else if (Int(arc4random_uniform(100)) <= difficulty / 3){
+                            randomCards = findRandomCards(thisMany: 2, alreadySelected: matchingCards)
+                        }
+                        else {
+                            randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                        }
+                    }
+                break
+                case Difficulty.medium.rawValue:
+                    if (Int(arc4random_uniform(100)) <= difficulty) {
+                        if matchingCards.count >= 6 {
+                            randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                        }
+                        else if (cardsToPlay.count < 6 && cardsToPlay.count > 2) {
+                            if (Int(arc4random_uniform(100)) <= difficulty + 10) {
+                                randomCards = findRandomCards(thisMany: 2, alreadySelected: matchingCards)
+                            }
+                            else {
+                                randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                            }
+                        }
+                    }
+                    else {
+                        if (Int(arc4random_uniform(100)) <= difficulty) {
+                            randomCards = findRandomCards(thisMany: 3, alreadySelected: matchingCards)
+                        }
+                        else if (Int(arc4random_uniform(100)) <= 50){
+                            randomCards = findRandomCards(thisMany: 2, alreadySelected: matchingCards)
+                        }
+                        else {
+                            randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                        }
+                    }
+                break
+                case Difficulty.hard.rawValue:
+                    if (Int(arc4random_uniform(100)) <= difficulty / 4) {
+                        if matchingCards.count >= 6 {
+                            randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                        }
+                        else if (cardsToPlay.count < 6 && cardsToPlay.count > 2) {
+                            if (Int(arc4random_uniform(100)) <= difficulty) {
+                                randomCards = findRandomCards(thisMany: 2, alreadySelected: matchingCards)
+                            }
+                            else {
+                                randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                            }
+                        }
+                    }
+                    else {
+                        if (Int(arc4random_uniform(100)) <= difficulty) {
+                            randomCards = findRandomCards(thisMany: 3, alreadySelected: matchingCards)
+                        }
+                        else if (Int(arc4random_uniform(100)) <= difficulty + 10){
+                            randomCards = findRandomCards(thisMany: 2, alreadySelected: matchingCards)
+                        }
+                        else {
+                            randomCards = findRandomCards(thisMany: 1, alreadySelected: matchingCards)
+                        }
+                    }
+                break
+                default:
+                    print("Error No Default Difficulty!")
+                break
+                }
+            }
+        }
+        
+        print(randomCards)
+        for rc in randomCards {
+            cardsToRemove.insert(rc)
+        }
+
+        print(matchingCards)
+        for mc in matchingCards {
+            cardsToRemove.insert(mc)
+        }
+        
+        print(cardsToRemove)
+        for ctr in cardsToRemove.sorted().reversed() {
+            cardsToPlay.append(playerHand[ctr])
+            playerHand.remove(at: ctr)
+        }
+        
+        if cardsToPlay.count == 0 {
+            print("Error: no cards to play")
+        }
+        
+        return cardsToPlay
+    }
     
     func callDoubt(lastValue :Value, numCardsPlayed: Int, lastPlayerCount :Int ) {
         let haveCards = findCardsInHand(value: lastValue)

@@ -55,20 +55,40 @@ class PlayScene: SKScene {
     var p = 0
     for card in deck.gameDeck {
         players[p%4].addCard(card: card)
-        players[p%4].position.x = screenWidth / 2
-        players[p%4].position.y = screenHeight - CGFloat(p * 10)
         card.position = CGPoint(x: p * 10, y: 0)
         p += 1
     }
     
-    for player in players {
-        print(player.name)
-        for c in 0...12 {
-            print(player.playerHand[c].getIcon())
-        }
-        addChild(player)
-    }
+//    for player in players {
+//        print(player.name)
+//        for c in 0...12 {
+//            print(player.playerHand[c].getIcon())
+//        }
+//        player.color = .red
+//        player.colorBlendFactor = 1
+//        addChild(player)
+//    }
+    addChild(players[0])
+    let texture = SKTexture(imageNamed: "invisible")
+    let discardPile = SKSpriteNode(texture: texture, color: .yellow, size: CGSize.init(width: 140, height: 190))
+    discardPile.blendMode = .subtract
+    discardPile.colorBlendFactor = 1
+    discardPile.position = CGPoint(x: screenWidth/2, y: screenHeight/2)
+    addChild(discardPile)
     
+    players[0].position = CGPoint(x: screenWidth/4, y: screenHeight/2 - players[0].size.height)
+//    players[1].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
+//    players[2].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
+//    players[3].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
+//    players[0].zRotation = CGFloat(0 * M_PI_2 / 360)
+//    players[1].zRotation = CGFloat(90 * M_PI_2 / 360)
+//    players[2].zRotation = CGFloat(180 * M_PI_2 / 360)
+//    players[3].zRotation = CGFloat(270 * M_PI_2 / 360)
+    for card in players[0].playHand(currValue: .Ace) {
+        let moveCard = SKAction.move(to: discardPile.position, duration: 1)
+        card.run(moveCard)
+        card.move(toParent: discardPile)
+    }
   }
   
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -90,19 +110,18 @@ class PlayScene: SKScene {
         card.run(SKAction.scale(to: 1.3, duration: 0.25), withKey: "pickup")
         print(card.getIcon())
         print(card.cardName)
-        print(card.parent?.name)
         }
     }
   }
   
-//  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-//    for touch in touches {
-//      let location = touch.location(in: self)
-//      if let card = atPoint(location) as? Card {
-//        card.position = location
-//      }
-//    }
-//  }
+  override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    for touch in touches {
+      let location = touch.location(in: self)
+      if let card = atPoint(location) as? Card {
+        card.position = location
+      }
+    }
+  }
   
   override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     for touch in touches {
@@ -116,9 +135,10 @@ class PlayScene: SKScene {
         
         card.removeAction(forKey: "pickup")
         card.run(SKAction.scale(to: 1.0, duration: 0.25), withKey: "drop")
-//fix bug here
-//        card.removeFromParent()
-//        addChild(card)
+        
+//        let parent = card.parent
+        card.removeFromParent()
+        addChild(card)
       }
         if (node.name == "Infobtn" || node.name == "Infolabel") {
             let scene = MainMenu()
