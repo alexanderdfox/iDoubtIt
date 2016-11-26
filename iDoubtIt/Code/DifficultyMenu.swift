@@ -84,6 +84,9 @@ class DifficultyMenu :SKScene  {
         for touch in touches {
             let location = touch.location(in: self)
             let node = atPoint(location)
+            let EasyBtn = childNode(withName: "Easybtn") as! SKSpriteNode
+            let MediumBtn = childNode(withName: "Mediumbtn") as! SKSpriteNode
+            let HardBtn = childNode(withName: "Hardbtn") as! SKSpriteNode
             if (node.name == "Backbtn") {
                 let scene = MainMenu()
                 view?.showsFPS = true
@@ -102,6 +105,8 @@ class DifficultyMenu :SKScene  {
                 }
                 prefs.set(Difficulty.easy.rawValue, forKey: "Difficulty")
                 btn.color = .green
+                MediumBtn.color = .red
+                HardBtn.color = .red
                 difficulty = prefs.integer(forKey: "Difficulty")
             }
             if (node.name == "Mediumbtn" || node.name == "Mediumlabel") {
@@ -114,6 +119,8 @@ class DifficultyMenu :SKScene  {
                 }
                 prefs.set(Difficulty.medium.rawValue, forKey: "Difficulty")
                 btn.color = .green
+                EasyBtn.color = .red
+                HardBtn.color = .red
                 difficulty = prefs.integer(forKey: "Difficulty")
             }
             if (node.name == "Hardbtn" || node.name == "Hardlabel") {
@@ -126,6 +133,8 @@ class DifficultyMenu :SKScene  {
                 }
                 prefs.set(Difficulty.hard.rawValue, forKey: "Difficulty")
                 btn.color = .green
+                EasyBtn.color = .red
+                MediumBtn.color = .red
                 difficulty = prefs.integer(forKey: "Difficulty")
             }
         }

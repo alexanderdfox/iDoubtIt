@@ -46,7 +46,7 @@ class PlayScene: SKScene {
     let ai3 = Player(human: false, playerName: "AI 3", level: Difficulty.easy)
     
     let players = [human,ai1,ai2,ai3]
-//    let aiplayers = [ai1,ai2,ai3]
+    let aiplayers = [ai1,ai2,ai3]
     
     deck.naturalShuffle()
     deck.randShuffle()
@@ -59,16 +59,16 @@ class PlayScene: SKScene {
         p += 1
     }
     
-//    for player in players {
-//        print(player.name)
-//        for c in 0...12 {
-//            print(player.playerHand[c].getIcon())
-//        }
-//        player.color = .red
-//        player.colorBlendFactor = 1
-//        addChild(player)
-//    }
-    addChild(players[0])
+    for player in players {
+        print(player.name)
+        for c in 0...12 {
+            print(player.playerHand[c].getIcon())
+        }
+        player.color = .red
+        player.colorBlendFactor = 1
+        addChild(player)
+    }
+
     let texture = SKTexture(imageNamed: "invisible")
     let discardPile = SKSpriteNode(texture: texture, color: .yellow, size: CGSize.init(width: 140, height: 190))
     discardPile.blendMode = .subtract
@@ -77,17 +77,20 @@ class PlayScene: SKScene {
     addChild(discardPile)
     
     players[0].position = CGPoint(x: screenWidth/4, y: screenHeight/2 - players[0].size.height)
-//    players[1].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
-//    players[2].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
-//    players[3].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
-//    players[0].zRotation = CGFloat(0 * M_PI_2 / 360)
-//    players[1].zRotation = CGFloat(90 * M_PI_2 / 360)
-//    players[2].zRotation = CGFloat(180 * M_PI_2 / 360)
-//    players[3].zRotation = CGFloat(270 * M_PI_2 / 360)
-    for card in players[0].playHand(currValue: .Ace) {
-        let moveCard = SKAction.move(to: discardPile.position, duration: 1)
-        card.run(moveCard)
-        card.move(toParent: discardPile)
+    players[1].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
+    players[2].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
+    players[3].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
+    players[0].zRotation = CGFloat(0 * M_PI_2 / 360)
+    players[1].zRotation = CGFloat(90 * M_PI_2 / 360)
+    players[2].zRotation = CGFloat(180 * M_PI_2 / 360)
+    players[3].zRotation = CGFloat(270 * M_PI_2 / 360)
+    
+    for p in 0..<players.count {
+        for card in players[p].playHand(currValue: .Ace) {
+            let moveCard = SKAction.move(to: discardPile.position, duration: 1)
+            card.run(moveCard)
+            card.move(toParent: discardPile)
+        }
     }
   }
   
