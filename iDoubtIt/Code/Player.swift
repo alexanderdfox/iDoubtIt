@@ -526,10 +526,10 @@ class Player :SKSpriteNode {
         }
         
         if willCallDoubt {
-            print("\(name) called Doubt")
+            print("\(String(describing: name)) called Doubt")
         }
         else {
-            print("\(name) did not call Doubt")
+            print("\(String(describing: name)) did not call Doubt")
         }
     }
     

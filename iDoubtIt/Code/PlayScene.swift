@@ -46,7 +46,7 @@ class PlayScene: SKScene {
     let ai3 = Player(human: false, playerName: "AI 3", level: Difficulty.easy)
     
     let players = [human,ai1,ai2,ai3]
-    let aiplayers = [ai1,ai2,ai3]
+//    let aiplayers = [ai1,ai2,ai3]
     
     deck.naturalShuffle()
     deck.randShuffle()
@@ -60,7 +60,7 @@ class PlayScene: SKScene {
     }
     
     for player in players {
-        print(player.name)
+        print(player.name!)
         for c in 0...12 {
             print(player.playerHand[c].getIcon())
         }
@@ -80,10 +80,10 @@ class PlayScene: SKScene {
     players[1].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
     players[2].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
     players[3].position = CGPoint(x: screenWidth/4, y: screenHeight/2)
-    players[0].zRotation = CGFloat(0 * M_PI_2 / 360)
-    players[1].zRotation = CGFloat(90 * M_PI_2 / 360)
-    players[2].zRotation = CGFloat(180 * M_PI_2 / 360)
-    players[3].zRotation = CGFloat(270 * M_PI_2 / 360)
+    players[0].zRotation = CGFloat(0 * Double.pi/2 / 360)
+    players[1].zRotation = CGFloat(90 * Double.pi/2 / 360)
+    players[2].zRotation = CGFloat(180 * Double.pi/2 / 360)
+    players[3].zRotation = CGFloat(270 * Double.pi/2 / 360)
     
     for p in 0..<players.count {
         for card in players[p].playHand(currValue: .Ace) {
