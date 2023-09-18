@@ -60,7 +60,7 @@ class MainMenu: SKScene  {
             let location = touch.location(in: self)
             let node = atPoint(location)
             if (node.name == "Playbtn" || node.name == "Playlabel") {
-                let scene = PlayScene()
+                let scene = PlayScene(size: screenSize.size)
                 view?.showsFPS = true
                 view?.showsNodeCount = true
                 view?.ignoresSiblingOrder = false

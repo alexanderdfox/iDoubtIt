@@ -53,9 +53,17 @@ class SettingsMenu :SKScene  {
         addChild(soundBtn)
         
         let diffbtn = button(image: "button1", name: "Difficulty", color: .black, label: "Difficulty")
-        diffbtn.position = CGPoint(x: screenWidth / 4 + (diffbtn.size.width * 3), y: screenHeight / 2 - diffbtn.size.height / 2)
+        diffbtn.position = CGPoint(x: screenWidth / 6 + (diffbtn.size.width * 1.5), y: screenHeight / 3 - diffbtn.size.height / 2)
         diffbtn.anchorPoint = CGPoint.zero
-        diffbtn.color = .yellow
+        if difficulty == Difficulty.easy.rawValue {
+            diffbtn.color = .green
+        }
+        else if difficulty == Difficulty.medium.rawValue {
+            diffbtn.color = .yellow
+        }
+        else if difficulty == Difficulty.hard.rawValue {
+            diffbtn.color = .red
+        }
         addChild(diffbtn)
         
     }
@@ -87,19 +95,28 @@ class SettingsMenu :SKScene  {
                 scene.scaleMode = .aspectFill
                 view?.presentScene(scene)
             }
-            if (node.name == "Difficultybrn" || node.name == "Difficultylabel") {
-                let scene = DifficultyMenu()
-                view?.showsFPS = true
-                view?.showsNodeCount = true
-                view?.ignoresSiblingOrder = false
-                scene.scaleMode = .aspectFill
-                view?.presentScene(scene)
+            if (node.name == "Difficultybtn" || node.name == "Difficultylabel") {
+                var btn = SKSpriteNode()
+                if node.name == "Difficultylabel" {
+                    btn = node.parent as! SKSpriteNode
+                }
+                difficulty = prefs.integer(forKey: "Difficulty")
+                if difficulty == Difficulty.easy.rawValue {
+                    prefs.set(Difficulty.medium.rawValue, forKey: "Difficulty")
+                    btn.color = .yellow
+                }
+                else if difficulty == Difficulty.medium.rawValue {
+                    prefs.set(Difficulty.hard.rawValue, forKey: "Difficulty")
+                    btn.color = .red
+                }
+                else if difficulty == Difficulty.hard.rawValue {
+                    prefs.set(Difficulty.easy.rawValue, forKey: "Difficulty")
+                    btn.color = .green
+                }
+                difficulty = prefs.integer(forKey: "Difficulty")
             }
             if (node.name == "Wackybtn" || node.name == "Wackylabel") {
                 var btn = SKSpriteNode()
-                if node.name == "Wackybtn" {
-                    btn = node as! SKSpriteNode
-                }
                 if node.name == "Wackylabel" {
                     btn = node.parent as! SKSpriteNode
                 }
@@ -115,9 +132,6 @@ class SettingsMenu :SKScene  {
             }
             if (node.name == "Soundbtn" || node.name == "Soundlabel") {
                 var btn = SKSpriteNode()
-                if node.name == "Soundbtn" {
-                    btn = node as! SKSpriteNode
-                }
                 if node.name == "Soundlabel" {
                     btn = node.parent as! SKSpriteNode
                 }
