@@ -2,75 +2,105 @@
 //  Deck.swift
 //  iDoubtIt
 //
-//  Created by Alexander Fox on 8/30/16.
-//  Copyright © 2016
+//  Updated 2025 — Refactored for clarity and maintainability
 //
 
 import Foundation
 import SpriteKit
 
+// MARK: - Deck Class
+/// Represents a deck of playing cards
 class Deck {
     
-    var gameDeck = [Card]()
+    // MARK: - Properties
     
-    init(wacky: Bool) {
-        var card :Card
+    /// Array holding all cards in the deck
+    private(set) var gameDeck = [Card]()
+    
+    // MARK: - Initializer
+    
+    /// Initializes a deck with standard cards, optionally including "wacky" Jokers
+    /// - Parameter wacky: If true, adds Jokers to the deck
+    init(wacky: Bool = false) {
         let facedUp = false
-        if !wacky {
-            for s in Suit.allValues {
-                for value in Value.allValues {
-                    if (s != .NoSuit && value != .Joker) {
-                        card = Card(suit: s, value: value, faceUp: facedUp)
-                        gameDeck.append(card)
-                    }
-                }
-            }
-        }
-        else {
-            for s in Suit.allValues {
-                for value in Value.allValues {
-                    if (s != .NoSuit && value != .Joker) {
-                        card = Card(suit: s, value: value, faceUp: facedUp)
-                        gameDeck.append(card)
-                    } else if (s == .NoSuit && value != .Joker) {
-                        card = Card(suit: s, value: .Joker, faceUp: facedUp)
-                        gameDeck.append(card)
-                    }
-                }
-            }
-        }
-    }
-    
-    func randShuffle() {
         
-        var shuffeled = [Card]()
-        let originalDeckSize = gameDeck.count
-
-        while shuffeled.count < originalDeckSize {
-            let r = Int(arc4random_uniform(UInt32(gameDeck.count)))
-            shuffeled.append(gameDeck[r])
-            gameDeck.remove(at: r)
+        // Loop through all suits and values
+        for suit in Suit.allCases {
+            for value in Value.allCases {
+                
+                // Standard cards: exclude Jokers and NoSuit
+                if suit != .NoSuit && value != .Joker {
+                    let card = Card(suit: suit, value: value, faceUp: facedUp)
+                    gameDeck.append(card)
+                }
+                
+                // Wacky cards: Jokers with NoSuit
+                else if wacky && suit == .NoSuit && value != .Joker {
+                    let card = Card(suit: suit, value: .Joker, faceUp: facedUp)
+                    gameDeck.append(card)
+                }
+            }
         }
-        gameDeck.removeAll()
-        gameDeck = shuffeled
     }
     
-    func naturalShuffle() {
-        let halfd = gameDeck.count / 2
-        var halfDeck = [Card]()
-        var shuffeled = [Card]()
-        for _ in 0..<halfd {
-            halfDeck.append(gameDeck[0])
-            gameDeck.remove(at: 0)
-        }
-        for _ in 0..<halfd {
-            shuffeled.append(halfDeck[0])
-            halfDeck.remove(at: 0)
-            shuffeled.append(gameDeck[0])
-            gameDeck.remove(at: 0)
-        }
-        gameDeck.removeAll()
-        gameDeck = shuffeled
+    // MARK: - Shuffling Methods
+    
+    /// Random shuffle using Swift's built-in `shuffle()`
+    func randShuffle() {
+        gameDeck.shuffle()
     }
-
+    
+    /// Natural (riffle) shuffle
+    /// Interleaves two halves of the deck to simulate a real-life shuffle
+    func naturalShuffle() {
+        guard gameDeck.count > 1 else { return }
+        
+        let halfIndex = gameDeck.count / 2
+        let firstHalf = Array(gameDeck[..<halfIndex])
+        let secondHalf = Array(gameDeck[halfIndex...])
+        
+        var shuffledDeck = [Card]()
+        var i = 0, j = 0
+        
+        // Interleave cards from both halves
+        while i < firstHalf.count || j < secondHalf.count {
+            if i < firstHalf.count {
+                shuffledDeck.append(firstHalf[i])
+                i += 1
+            }
+            if j < secondHalf.count {
+                shuffledDeck.append(secondHalf[j])
+                j += 1
+            }
+        }
+        
+        gameDeck = shuffledDeck
+    }
+    
+    // MARK: - Deck Operations
+    
+    /// Draws the top card from the deck
+    /// - Returns: The top `Card` or `nil` if deck is empty
+    func drawCard() -> Card? {
+        guard !gameDeck.isEmpty else { return nil }
+        return gameDeck.removeFirst()
+    }
+    
+    /// Checks if the deck is empty
+    /// - Returns: True if no cards are left
+    func isEmpty() -> Bool {
+        return gameDeck.isEmpty
+    }
+    
+    /// Adds a card to the bottom of the deck
+    /// - Parameter card: The `Card` to add
+    func addCardToBottom(_ card: Card) {
+        gameDeck.append(card)
+    }
+    
+    /// Adds multiple cards to the deck
+    /// - Parameter cards: Array of `Card`s to add
+    func addCards(_ cards: [Card]) {
+        gameDeck.append(contentsOf: cards)
+    }
 }

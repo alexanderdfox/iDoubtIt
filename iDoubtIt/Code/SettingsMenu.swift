@@ -1,150 +1,119 @@
-//
-//  SettingsMenu.swift
-//  iDoubtIt
-//
-//  Created by Alexander Fox on 8/30/16.
-//  Copyright © 2016
-//
-
 import Foundation
 import SpriteKit
+import UIKit
 
-class SettingsMenu :SKScene  {
+class SettingsMenu: SKScene {
     
-    override init() {
-        super.init(size: screenSize.size)
+    // MARK: - Init
+    override init(size: CGSize = screenSize.size) {
+        super.init(size: size)
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // MARK: - Scene setup
     override func didMove(to view: SKView) {
-        let bg = SKSpriteNode(imageNamed: background)
-        bg.anchorPoint = CGPoint.zero
-        bg.position = CGPoint.zero
-        bg.size = CGSize(width: screenWidth, height: screenHeight)
+        // Background
+        let bg = SKSpriteNode(color: Pref.shared.backgroundColor, size: self.size)
+        bg.anchorPoint = .zero
+        bg.position = .zero
+        bg.zPosition = -1
         addChild(bg)
         
-        let backButton = button(image: "back", name: "Back", color: .white, label: "")
-        backButton.position = CGPoint(x: 10, y: screenHeight - 50)
+        // Back button (top-left)
+        let backButton = button(name: "Back", color: .darkGray, label: "Back")
+        
+        // Make sure it stays fully on screen
+        let margin: CGFloat = 20
+        let halfWidth = backButton.size.width / 2
+        let halfHeight = backButton.size.height / 2
+        backButton.position = CGPoint(x: halfWidth + margin,
+                                      y: size.height - halfHeight - margin)
+        backButton.zPosition = 999
         addChild(backButton)
         
-        let wackyBtn = button(image: "button1", name: "Wacky", color: .black, label: "Wacky")
-        wackyBtn.position = CGPoint(x: screenWidth / 2 - (wackyBtn.size.width * 1.5), y: screenHeight / 2 - wackyBtn.size.height / 2)
-        wackyBtn.anchorPoint = CGPoint.zero
-        if isWacky {
-            wackyBtn.color = .green
-        }
-        else {
-            wackyBtn.color = .red
-        }
-        addChild(wackyBtn)
+        // Toggle buttons (centered)
+        addSettingButton(name: "Wacky", label: "Wacky", yOffset: 40, isActive: Pref.shared.isWacky)
+        addSettingButton(name: "Sound", label: "Sound", yOffset: -40, isActive: Pref.shared.soundOn)
         
-        let soundBtn = button(image: "button1", name: "Sound", color: .black, label: "Sound")
-        soundBtn.position = CGPoint(x: screenWidth / 4 + (soundBtn.size.width * 1.5), y: screenHeight / 2 - soundBtn.size.height / 2)
-        soundBtn.anchorPoint = CGPoint.zero
-        if soundOn {
-            soundBtn.color = .green
-        }
-        else {
-            soundBtn.color = .red
-        }
-        addChild(soundBtn)
-        
-        let diffbtn = button(image: "button1", name: "Difficulty", color: .black, label: "Difficulty")
-        diffbtn.position = CGPoint(x: screenWidth / 6 + (diffbtn.size.width * 1.5), y: screenHeight / 3 - diffbtn.size.height / 2)
-        diffbtn.anchorPoint = CGPoint.zero
-        if difficulty == Difficulty.easy.rawValue {
-            diffbtn.color = .green
-        }
-        else if difficulty == Difficulty.medium.rawValue {
-            diffbtn.color = .yellow
-        }
-        else if difficulty == Difficulty.hard.rawValue {
-            diffbtn.color = .red
-        }
-        addChild(diffbtn)
-        
+        // Difficulty button (bottom-center)
+        addDifficultyButton()
     }
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        //        for touch in touches {
-        //            let location = touch.locationInNode(self)
-        //
-        //        }
+    // MARK: - Toggle button helper
+    private func addSettingButton(name: String, label: String, yOffset: CGFloat, isActive: Bool) {
+        let btnColor: UIColor = isActive ? .systemGreen : .systemRed
+        let btn = button(name: name, color: btnColor, label: label)
+        btn.position = CGPoint(x: size.width / 2, y: size.height / 2 + yOffset)
+        addChild(btn)
     }
     
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        //        for touch in touches {
-        //            let location = touch.locationInNode(self)
-        //
-        //        }
+    // MARK: - Difficulty button helper
+    private func addDifficultyButton() {
+        let current = Pref.shared.difficulty
+        let btnColor: UIColor
+        switch current {
+        case Difficulty.easy.rawValue: btnColor = .systemGreen
+        case Difficulty.medium.rawValue: btnColor = .systemYellow
+        case Difficulty.hard.rawValue: btnColor = .systemRed
+        default: btnColor = .systemGreen
+        }
+        
+        let btn = button(name: "Difficulty", color: btnColor, label: "Difficulty")
+        btn.position = CGPoint(x: size.width / 2, y: size.height / 4)
+        addChild(btn)
     }
     
+    // MARK: - Touch handling
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        let prefs = UserDefaults.standard
         for touch in touches {
             let location = touch.location(in: self)
             let node = atPoint(location)
-            if (node.name == "Backbtn") {
-                let scene = MainMenu()
-                view?.showsFPS = true
-                view?.showsNodeCount = true
-                view?.ignoresSiblingOrder = false
-                scene.scaleMode = .aspectFill
-                view?.presentScene(scene)
-            }
-            if (node.name == "Difficultybtn" || node.name == "Difficultylabel") {
-                var btn = SKSpriteNode()
-                if node.name == "Difficultylabel" {
-                    btn = node.parent as! SKSpriteNode
+            
+            let btnNode = (node.name?.hasSuffix("btn") ?? false) ? node as? SKSpriteNode : node.parent as? SKSpriteNode
+            guard let button = btnNode, let name = button.name else { continue }
+            
+            switch name {
+            case "Backbtn":
+                presentScene(MainMenu(size: size))
+                
+            case "Difficultybtn":
+                var nextDifficulty = Difficulty.easy.rawValue
+                switch Pref.shared.difficulty {
+                case Difficulty.easy.rawValue: nextDifficulty = Difficulty.medium.rawValue
+                case Difficulty.medium.rawValue: nextDifficulty = Difficulty.hard.rawValue
+                case Difficulty.hard.rawValue: nextDifficulty = Difficulty.easy.rawValue
+                default: nextDifficulty = Difficulty.easy.rawValue
                 }
-                difficulty = prefs.integer(forKey: "Difficulty")
-                if difficulty == Difficulty.easy.rawValue {
-                    prefs.set(Difficulty.medium.rawValue, forKey: "Difficulty")
-                    btn.color = .yellow
+                Pref.shared.difficulty = nextDifficulty
+                
+                switch nextDifficulty {
+                case Difficulty.easy.rawValue: button.color = .systemGreen
+                case Difficulty.medium.rawValue: button.color = .systemYellow
+                case Difficulty.hard.rawValue: button.color = .systemRed
+                default: button.color = .systemGreen
                 }
-                else if difficulty == Difficulty.medium.rawValue {
-                    prefs.set(Difficulty.hard.rawValue, forKey: "Difficulty")
-                    btn.color = .red
-                }
-                else if difficulty == Difficulty.hard.rawValue {
-                    prefs.set(Difficulty.easy.rawValue, forKey: "Difficulty")
-                    btn.color = .green
-                }
-                difficulty = prefs.integer(forKey: "Difficulty")
-            }
-            if (node.name == "Wackybtn" || node.name == "Wackylabel") {
-                var btn = SKSpriteNode()
-                if node.name == "Wackylabel" {
-                    btn = node.parent as! SKSpriteNode
-                }
-                if isWacky {
-                    prefs.set(false, forKey: "Wacky")
-                    btn.color = .red
-                }
-                else {
-                    prefs.set(true, forKey: "Wacky")
-                    btn.color = .green
-                }
-                isWacky = prefs.bool(forKey: "Wacky")
-            }
-            if (node.name == "Soundbtn" || node.name == "Soundlabel") {
-                var btn = SKSpriteNode()
-                if node.name == "Soundlabel" {
-                    btn = node.parent as! SKSpriteNode
-                }
-                if soundOn {
-                    prefs.set(false, forKey: "Sound")
-                    btn.color = .red
-                }
-                else {
-                    prefs.set(true, forKey: "Sound")
-                    btn.color = .green
-                }
-                soundOn = prefs.bool(forKey: "Sound")
+                
+            case "Wackybtn":
+                Pref.shared.isWacky.toggle()
+                button.color = Pref.shared.isWacky ? .systemGreen : .systemRed
+                
+            case "Soundbtn":
+                Pref.shared.soundOn.toggle()
+                button.color = Pref.shared.soundOn ? .systemGreen : .systemRed
+                
+            default: break
             }
         }
+    }
+    
+    // MARK: - Scene transition helper
+    private func presentScene(_ scene: SKScene) {
+        scene.scaleMode = .aspectFill
+        view?.showsFPS = true
+        view?.showsNodeCount = true
+        view?.presentScene(scene, transition: SKTransition.fade(withDuration: 0.5))
     }
 }
