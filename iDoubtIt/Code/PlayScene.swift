@@ -12,13 +12,16 @@ class PlayScene: SKScene {
     private var lastTapTime: TimeInterval = 0
     private let doubleTapThreshold: TimeInterval = 0.35
     
+    private var doubtButton: SKSpriteNode?
+    
     override func didMove(to view: SKView) {
         self.isUserInteractionEnabled = true
         setupBackground()
         setupDiscardPile()
         setupDeckAndPlayers()
         setupBackButton()
-        
+        setupDoubtButton() // human doubt button
+
         // Let AI play first turn if human is not first
         run(SKAction.wait(forDuration: 1.0)) { [weak self] in
             self?.aiPlayTurn()
@@ -151,7 +154,42 @@ class PlayScene: SKScene {
         }
     }
 
-    // MARK: - Touch Handling
+    private func setupDoubtButton() {
+        doubtButton = button(name: "Doubt", color: .red, label: "Doubt")
+        guard let doubtButton = doubtButton else { return }
+
+        // Ensure the button is on top
+        doubtButton.zPosition = 1000
+        doubtButton.name = "Doubt"
+
+        addChild(doubtButton)
+
+        // Position centered above human hand
+        if let human = players.first(where: { $0.isHuman }) {
+            let hand = human.playerHand
+            if !hand.isEmpty {
+                // Get first and last card X positions
+                let spacing: CGFloat = 50
+                let totalWidth = spacing * CGFloat(hand.count - 1)
+                let startX = size.width/2 - totalWidth/2
+                let centerX = startX + totalWidth / 2
+
+                // Y position just above cards
+                let handY: CGFloat = 120
+                let spacingAbove: CGFloat = 170
+
+                doubtButton.position = CGPoint(x: centerX, y: handY + spacingAbove)
+            } else {
+                // fallback
+                doubtButton.position = CGPoint(x: size.width/2, y: 200)
+            }
+        } else {
+            // fallback
+            doubtButton.position = CGPoint(x: size.width/2, y: 200)
+        }
+    }
+
+    // Touch handling stays the same
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
@@ -161,6 +199,11 @@ class PlayScene: SKScene {
         for node in nodesAtPoint {
             if node.name == "Backbtn" || node.name == "Backlabel" {
                 goToMainMenu()
+                return
+            }
+
+            if node.name == "Doubt" {
+                handleHumanDoubt()
                 return
             }
 
@@ -180,6 +223,29 @@ class PlayScene: SKScene {
         }
     }
 
+    private func handleHumanDoubt() {
+        guard let lastCard = discardPile.children.last as? Card else {
+            print("No card in discard pile to doubt")
+            return
+        }
+
+        let lastValue = lastCard.value
+        guard let human = players.first(where: { $0.isHuman }) else {
+            print("No human player found")
+            return
+        }
+
+        human.callDoubt(
+            lastValue: lastValue,
+            numCardsPlayed: 1,
+            lastPlayerCount: human.playerHand.count
+        )
+
+        // Ensure console prints every time
+        print("Human called doubt on value \(lastValue)")
+    }
+
+
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let card = pickedCard else { return }
         let location = touch.location(in: self)
@@ -189,11 +255,9 @@ class PlayScene: SKScene {
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let card = pickedCard else { return }
 
-        // Snap to discard if close
         if card.position.distance(to: discardPile.position) < 100 {
             moveCardToDiscard(card)
         } else {
-            // Return to hand
             if let owner = players.first(where: { $0.playerHand.contains(card) }) {
                 switch owner.name {
                 case "Human": layoutHandBottom(owner)
@@ -211,22 +275,16 @@ class PlayScene: SKScene {
     private func moveCardToDiscard(_ card: Card) {
         guard let owner = players.first(where: { $0.playerHand.contains(card) }) else { return }
 
-        // Remove from owner's hand
         owner.playerHand.removeAll(where: { $0 == card })
-
-        // Remove from scene and add to discard pile
         card.removeFromParent()
         discardPile.addChild(card)
         card.position = CGPoint.zero
         card.zPosition = CardLevel.board.rawValue + 5
 
-        // Flip card face up if AI played it
         if !owner.isHuman {
             card.facedUp = true
-//            card.texture = card.frontTexture // assumes Card has a frontTexture property
         }
 
-        // Relayout the owner's hand
         switch owner.name {
         case "Human": layoutHandBottom(owner)
         case "AI 1": layoutHandLeft(owner)
@@ -238,12 +296,10 @@ class PlayScene: SKScene {
 
     // MARK: - AI Turn Loop
     private func aiPlayTurn() {
-        // All AI players in order
         let aiPlayers = players.filter { !$0.isHuman }
         playAISequentially(aiPlayers, index: 0)
     }
 
-    // Recursive helper to handle AI turns sequentially with 1s delay
     private func playAISequentially(_ aiPlayers: [Player], index: Int) {
         guard index < aiPlayers.count else { return }
 
@@ -253,7 +309,6 @@ class PlayScene: SKScene {
             return
         }
 
-        // Determine last discard value
         let lastValue: Value
         if let topCard = discardPile.children.last as? Card {
             lastValue = topCard.value
@@ -263,16 +318,11 @@ class PlayScene: SKScene {
             return
         }
 
-        // AI plays cards
         let cardsToPlay = player.playHand(currValue: lastValue)
-        for card in cardsToPlay {
-            moveCardToDiscard(card)
-        }
+        for card in cardsToPlay { moveCardToDiscard(card) }
 
-        // AI may call doubt
         player.callDoubt(lastValue: lastValue, numCardsPlayed: cardsToPlay.count, lastPlayerCount: player.playerHand.count)
 
-        // Delay 1 second before next AI
         run(SKAction.wait(forDuration: 1.0)) { [weak self] in
             self?.playAISequentially(aiPlayers, index: index + 1)
         }

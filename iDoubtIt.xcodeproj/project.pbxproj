@@ -3,14 +3,10 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 53;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0241FC191D768B500080C4EA /* MenuAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0241FC181D768B500080C4EA /* MenuAssets.xcassets */; };
-		0241FC1B1D7691540080C4EA /* CardCovers.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0241FC1A1D7691540080C4EA /* CardCovers.xcassets */; };
-		0241FC1D1D76918E0080C4EA /* Cards.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0241FC1C1D76918E0080C4EA /* Cards.xcassets */; };
-		0241FC1F1D7691D20080C4EA /* Backgrounds.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0241FC1E1D7691D20080C4EA /* Backgrounds.xcassets */; };
 		0254C6E01D74E33F004BFD9F /* Game.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0254C6D51D74E33F004BFD9F /* Game.xcassets */; };
 		0254C6E11D74E33F004BFD9F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0254C6D61D74E33F004BFD9F /* LaunchScreen.storyboard */; };
 		0254C6E21D74E33F004BFD9F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0254C6D81D74E33F004BFD9F /* Main.storyboard */; };
@@ -28,10 +24,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0241FC181D768B500080C4EA /* MenuAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = MenuAssets.xcassets; sourceTree = "<group>"; };
-		0241FC1A1D7691540080C4EA /* CardCovers.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = CardCovers.xcassets; sourceTree = "<group>"; };
-		0241FC1C1D76918E0080C4EA /* Cards.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Cards.xcassets; sourceTree = "<group>"; };
-		0241FC1E1D7691D20080C4EA /* Backgrounds.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Backgrounds.xcassets; sourceTree = "<group>"; };
 		0254C6D51D74E33F004BFD9F /* Game.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Game.xcassets; sourceTree = "<group>"; };
 		0254C6D71D74E33F004BFD9F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		0254C6D91D74E33F004BFD9F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -101,12 +93,8 @@
 			isa = PBXGroup;
 			children = (
 				0254C6D51D74E33F004BFD9F /* Game.xcassets */,
-				0241FC1E1D7691D20080C4EA /* Backgrounds.xcassets */,
 				0254C6DE1D74E33F004BFD9F /* Info.plist */,
 				0254C6EB1D74E3D9004BFD9F /* Default-568h@2x.png */,
-				0241FC181D768B500080C4EA /* MenuAssets.xcassets */,
-				0241FC1A1D7691540080C4EA /* CardCovers.xcassets */,
-				0241FC1C1D76918E0080C4EA /* Cards.xcassets */,
 			);
 			name = Assets;
 			sourceTree = "<group>";
@@ -155,12 +143,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 0730;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1640;
 				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					D3EFEB051CD3C43400014542 = {
 						CreatedOnToolsVersion = 7.3;
-						DevelopmentTeam = MSAG5KPFBE;
 						LastSwiftMigration = 0800;
 					};
 				};
@@ -189,13 +176,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				0254C6E21D74E33F004BFD9F /* Main.storyboard in Resources */,
-				0241FC1D1D76918E0080C4EA /* Cards.xcassets in Resources */,
 				0254C6E01D74E33F004BFD9F /* Game.xcassets in Resources */,
-				0241FC1F1D7691D20080C4EA /* Backgrounds.xcassets in Resources */,
 				0254C6EC1D74E3D9004BFD9F /* Default-568h@2x.png in Resources */,
-				0241FC191D768B500080C4EA /* MenuAssets.xcassets in Resources */,
 				0254C6E11D74E33F004BFD9F /* LaunchScreen.storyboard in Resources */,
-				0241FC1B1D7691540080C4EA /* CardCovers.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +228,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -276,6 +260,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -304,6 +289,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -335,6 +321,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -361,8 +348,9 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = MSAG5KPFBE;
 				INFOPLIST_FILE = "$(SRCROOT)/iDoubtIt/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -382,8 +370,9 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = MSAG5KPFBE;
 				INFOPLIST_FILE = "$(SRCROOT)/iDoubtIt/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
