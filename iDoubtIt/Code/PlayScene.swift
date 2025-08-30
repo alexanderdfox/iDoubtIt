@@ -236,7 +236,7 @@ class PlayScene: SKScene {
             let spacing: CGFloat = 50
             let totalWidth = spacing * CGFloat(hand.count - 1)
             let startX = size.width/2 - totalWidth/2
-            let centerX = startX + totalWidth / 2
+            let centerX = startX + totalWidth / 2 - 80
             let handY: CGFloat = 120
             let spacingAbove: CGFloat = 170
             
@@ -257,7 +257,7 @@ class PlayScene: SKScene {
             let spacing: CGFloat = 50
             let totalWidth = spacing * CGFloat(hand.count - 1)
             let startX = size.width/2 - totalWidth/2
-            let centerX = startX + totalWidth / 2
+            let centerX = startX + totalWidth / 2 + 80
             let handY: CGFloat = 120
             let spacingAbove: CGFloat = 170 // Same height as doubt button
             
