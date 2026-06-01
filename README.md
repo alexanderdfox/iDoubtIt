@@ -20,7 +20,7 @@ Open [`index.html`](index.html) in any modern browser (double-click or use a loc
 
 ## iOS app
 
-Open `iDoubtIt.xcodeproj` in Xcode and run on a simulator or device.
+Open `iDoubtIt.xcodeproj` in Xcode and run on a simulator, device, or **My Mac (Mac Catalyst)**.
 
 - **Play** — 1–4 humans (pass-and-play); empty seats are AI. Set human count in Settings.
 - **Watch AI** — four AIs play automatically (spectator mode).

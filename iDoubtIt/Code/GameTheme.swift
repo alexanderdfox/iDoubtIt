@@ -42,20 +42,49 @@ enum GameTheme {
     }
 
     static func layoutMargins(for size: CGSize) -> LayoutMargins {
-        let minE = min(size.width, size.height)
+        let w = size.width
+        let h = size.height
+        let minE = min(w, h)
         let isPad = UIDevice.current.userInterfaceIdiom == .pad || minE >= 600
-        return LayoutMargins.forScene(width: size.width, height: size.height, isPad: isPad)
+        let isPhone = !isPad && UIDevice.current.userInterfaceIdiom == .phone
+        return LayoutMargins.forScene(
+            width: w, height: h, isPad: isPad, isPhone: isPhone, isLandscape: w > h
+        )
     }
 }
 
 extension GameTheme.LayoutMargins {
-    static func forScene(width: CGFloat, height: CGFloat, isPad: Bool) -> GameTheme.LayoutMargins {
+    static func forScene(
+        width: CGFloat,
+        height: CGFloat,
+        isPad: Bool,
+        isPhone: Bool = false,
+        isLandscape: Bool = false
+    ) -> GameTheme.LayoutMargins {
         let minE = min(width, height)
-        let hasHomeIndicator = minE >= 812
-        let top: CGFloat = isPad ? 40 : (hasHomeIndicator ? 50 : 26)
-        let bottom: CGFloat = isPad ? 28 : (hasHomeIndicator ? 30 : 14)
-        let horizontal: CGFloat = isPad ? 28 : 18
-        return GameTheme.LayoutMargins(top: top, bottom: bottom, horizontal: horizontal)
+        let hasHomeIndicator = minE >= 812 || max(width, height) >= 812
+
+        let isMacCatalyst = ProcessInfo.processInfo.isMacCatalystApp
+        if isMacCatalyst {
+            return GameTheme.LayoutMargins(top: 24, bottom: 20, horizontal: 32)
+        }
+        if isPad {
+            return GameTheme.LayoutMargins(top: 40, bottom: 28, horizontal: 28)
+        }
+        if isPhone && isLandscape {
+            // Landscape: safe areas on the sides; keep vertical margins modest.
+            return GameTheme.LayoutMargins(top: 14, bottom: 10, horizontal: 22)
+        }
+        if isPhone {
+            return GameTheme.LayoutMargins(
+                top: hasHomeIndicator ? 48 : 36,
+                bottom: hasHomeIndicator ? 28 : 18,
+                horizontal: 18
+            )
+        }
+        let top: CGFloat = hasHomeIndicator ? 50 : 26
+        let bottom: CGFloat = hasHomeIndicator ? 30 : 14
+        return GameTheme.LayoutMargins(top: top, bottom: bottom, horizontal: 18)
     }
 }
 

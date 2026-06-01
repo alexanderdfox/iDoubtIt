@@ -12,7 +12,17 @@ class GameViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = GameTheme.backgroundTop
+        view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        if #available(iOS 13.0, *) {
+            view.insetsLayoutMarginsFromSafeArea = true
+        }
         becomeFirstResponder()
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        view.setNeedsLayout()
     }
 
     override func viewDidLayoutSubviews() {
@@ -23,8 +33,11 @@ class GameViewController: UIViewController {
             skView = existing
         } else {
             skView = SKView(frame: view.bounds)
+            skView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            skView.ignoresSiblingOrder = true
             view = skView
         }
+        skView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
         let newSize = skView.bounds.size
         guard newSize.width > 1, newSize.height > 1 else { return }

@@ -1,23 +1,32 @@
+//
+//  AppDelegate.swift
+//  iDoubtIt
+//
+
 import UIKit
 import SpriteKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    var window: UIWindow?
-
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        window = UIWindow(frame: UIScreen.main.bounds)
-        
-        // Use GameViewController as root
-        let rootVC = GameViewController()
-        window?.rootViewController = rootVC
-        window?.makeKeyAndVisible()
-        
-        return true
+        true
+    }
+
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let config = UISceneConfiguration(
+            name: "Default",
+            sessionRole: connectingSceneSession.role
+        )
+        config.delegateClass = SceneDelegate.self
+        return config
     }
 
     // MARK: - Lifecycle Safety
@@ -45,23 +54,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: - SKView Helpers
 
-    private func pauseSKView() {
-        // Safely pause SKView if it exists
-        if let skView = window?.rootViewController?.view as? SKView {
-            skView.isPaused = true
+    private func keySKView() -> SKView? {
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene,
+                  let root = windowScene.windows.first(where: { $0.isKeyWindow })?.rootViewController
+                    ?? windowScene.windows.first?.rootViewController else { continue }
+            if let sk = root.view as? SKView { return sk }
         }
+        return nil
+    }
+
+    private func pauseSKView() {
+        keySKView()?.isPaused = true
     }
 
     private func resumeSKView() {
-        if let skView = window?.rootViewController?.view as? SKView {
-            skView.isPaused = false
-        }
+        keySKView()?.isPaused = false
     }
 
-    // MARK: - Game State Saving
-
     private func saveGameState() {
-        // Replace with actual game saving logic
         print("Game state saved safely.")
     }
 }

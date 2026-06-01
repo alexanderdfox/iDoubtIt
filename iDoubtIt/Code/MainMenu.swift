@@ -39,25 +39,26 @@ class MainMenu: SKScene, LayoutResizing {
         let L = GameLayout.current
         let cx = size.width / 2
 
+        let phoneLandscape = L.isPhone && L.isLandscape
         let suits = SKLabelNode(text: "♠  ♥  ♦  ♣")
         suits.fontName = GameTheme.titleFont
-        suits.fontSize = min(34, size.width * 0.085)
+        suits.fontSize = phoneLandscape ? min(28, size.height * 0.07) : min(34, size.width * 0.085)
         suits.fontColor = UIColor.white.withAlphaComponent(0.35)
-        suits.position = CGPoint(x: cx, y: size.height * 0.72)
+        suits.position = CGPoint(x: cx, y: size.height * (phoneLandscape ? 0.84 : 0.72))
         suits.zPosition = 1
         addChild(suits)
 
         let title = GameTheme.makeTitleLabel("iDoubtIt", fontSize: L.titleSize)
-        title.position = CGPoint(x: cx, y: size.height * 0.62)
+        title.position = CGPoint(x: cx, y: size.height * (phoneLandscape ? 0.72 : 0.62))
         title.zPosition = 2
         addChild(title)
 
         let subtitle = GameTheme.makeSubtitleLabel("Play with friends or watch the AIs", fontSize: L.subtitleSize)
-        subtitle.position = CGPoint(x: cx, y: size.height * 0.54)
+        subtitle.position = CGPoint(x: cx, y: size.height * (phoneLandscape ? 0.62 : 0.54))
         subtitle.zPosition = 2
         addChild(subtitle)
 
-        let buttonY: [CGFloat] = [0.40, 0.30, 0.20]
+        let buttonY: [CGFloat] = phoneLandscape ? [0.48, 0.36, 0.24] : (L.isPhone ? [0.44, 0.32, 0.20] : [0.40, 0.30, 0.20])
         let playButton = button(name: "Play", color: GameTheme.buttonGreen, label: "Play", style: .menu)
         playButton.position = CGPoint(x: cx, y: size.height * buttonY[0])
         addChild(playButton)

@@ -48,9 +48,10 @@ class SettingsMenu: SKScene, LayoutResizing {
 
         let panelW = L.settingsPanelWidth
         let rowH = L.settingsRowHeight
-        let panelH = rowH * 7 + 20
+        let panelH = rowH * 7 + (L.isPhone ? 12 : 20)
         let panel = GameTheme.makeHUDPanel(width: panelW, height: panelH)
-        panel.position = CGPoint(x: size.width / 2, y: size.height * 0.46)
+        let panelY = L.isPhone ? size.height * (L.isLandscape ? 0.44 : 0.48) : size.height * 0.46
+        panel.position = CGPoint(x: size.width / 2, y: panelY)
         panel.zPosition = 0
         addChild(panel)
 

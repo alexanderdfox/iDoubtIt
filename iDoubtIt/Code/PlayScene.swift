@@ -240,13 +240,11 @@ class PlayScene: SKScene, LayoutResizing {
     }
     
     private func setupTurnIndicator() {
-        let m = L.margins
         let panelW = L.hudPanelWidth
         let panelH = L.hudPanelHeight
-        let panelY = size.height - m.top - L.cardHeight * 0.12 - panelH / 2 - 6
 
         let panel = GameTheme.makeHUDPanel(width: panelW, height: panelH)
-        panel.position = CGPoint(x: size.width / 2, y: panelY)
+        panel.position = CGPoint(x: size.width / 2, y: L.hudCenterY)
         panel.zPosition = 999
         panel.name = "hudPanel"
         addChild(panel)
@@ -258,7 +256,8 @@ class PlayScene: SKScene, LayoutResizing {
         turnIndicator?.fontColor = .white
         turnIndicator?.verticalAlignmentMode = .center
         turnIndicator?.horizontalAlignmentMode = .center
-        turnIndicator?.position = CGPoint(x: 0, y: 18)
+        let hudLineDY: CGFloat = L.isPhone ? 14 : 18
+        turnIndicator?.position = CGPoint(x: 0, y: hudLineDY)
         turnIndicator?.zPosition = 2
         if let turnIndicator = turnIndicator { panel.addChild(turnIndicator) }
 
@@ -278,7 +277,7 @@ class PlayScene: SKScene, LayoutResizing {
         rankIndicator?.fontColor = GameTheme.gold
         rankIndicator?.verticalAlignmentMode = .center
         rankIndicator?.horizontalAlignmentMode = .center
-        rankIndicator?.position = CGPoint(x: 0, y: -20)
+        rankIndicator?.position = CGPoint(x: 0, y: L.isPhone ? -16 : -20)
         rankIndicator?.zPosition = 2
         if let rankIndicator = rankIndicator { panel.addChild(rankIndicator) }
     }
@@ -295,7 +294,8 @@ class PlayScene: SKScene, LayoutResizing {
 
     private func setupDoubtButton() {
         setupActionBar()
-        doubtButton = button(name: "Doubt", color: GameTheme.buttonRed, label: "Doubt", style: .regular)
+        let actionStyle: ButtonStyle = L.actionUsesCompactButtons ? .compact : .regular
+        doubtButton = button(name: "Doubt", color: GameTheme.buttonRed, label: "Doubt", style: actionStyle)
         guard let doubtButton = doubtButton else { return }
         doubtButton.zPosition = controlsZ
         addChild(doubtButton)
@@ -303,7 +303,8 @@ class PlayScene: SKScene, LayoutResizing {
 
     private func setupPlayButton() {
         if playButton == nil {
-            playButton = button(name: "Play", color: GameTheme.buttonGreen, label: "Play", style: .regular)
+            let actionStyle: ButtonStyle = L.actionUsesCompactButtons ? .compact : .regular
+            playButton = button(name: "Play", color: GameTheme.buttonGreen, label: "Play", style: actionStyle)
             playButton?.zPosition = controlsZ
             addChild(playButton!)
         }
@@ -318,11 +319,12 @@ class PlayScene: SKScene, LayoutResizing {
         let spread = L.actionButtonSpread
         let cx = size.width / 2
 
+        let actionStyle: ButtonStyle = L.actionUsesCompactButtons ? .compact : .regular
         if let doubtButton = doubtButton {
-            applyButtonStyle(.regular, to: doubtButton)
+            applyButtonStyle(actionStyle, to: doubtButton)
         }
         if let playButton = playButton {
-            applyButtonStyle(.regular, to: playButton)
+            applyButtonStyle(actionStyle, to: playButton)
         }
 
         if let bar = actionBar {
@@ -538,7 +540,8 @@ class PlayScene: SKScene, LayoutResizing {
         guard total > 0 else { return }
         
         let availW = size.width - L.edgeSide * 2
-        let availH = size.height - L.edgeTop - L.edgeBottom - L.cardHeight * 0.35
+        let handVerticalPad = L.isPhone ? 0.18 : 0.35
+        let availH = size.height - L.edgeTop - L.edgeBottom - L.cardHeight * handVerticalPad
         
         let spacing: CGFloat
         let positions: [CGPoint]
@@ -1110,25 +1113,23 @@ class PlayScene: SKScene, LayoutResizing {
     }
 
     private func layoutHUDGeometry() {
-        let m = L.margins
-        let panelY = size.height - m.top - L.cardHeight * 0.12 - L.hudPanelHeight / 2 - 6
         hudPanel?.path = CGPath(roundedRect: CGRect(x: -L.hudPanelWidth/2, y: -L.hudPanelHeight/2, width: L.hudPanelWidth, height: L.hudPanelHeight), cornerWidth: 14, cornerHeight: 14, transform: nil)
-        hudPanel?.position = CGPoint(x: size.width / 2, y: panelY)
+        hudPanel?.position = CGPoint(x: size.width / 2, y: L.hudCenterY)
         turnIndicator?.fontSize = L.hudTurnSize
         turnHintLabel?.fontSize = L.hudHintSize
         rankIndicator?.fontSize = L.hudClaimSize
 
         if let panel = childNode(withName: "ToastPanel") as? SKShapeNode {
-            let w = min(size.width - 48, 360)
-            panel.path = CGPath(roundedRect: CGRect(x: -w/2, y: -24, width: w, height: 48), cornerWidth: 14, cornerHeight: 14, transform: nil)
-            panel.position = CGPoint(x: size.width / 2, y: size.height * 0.44)
+            let w = min(size.width - 48, L.isPhone ? 300 : 360)
+            panel.path = CGPath(roundedRect: CGRect(x: -w/2, y: -22, width: w, height: 44), cornerWidth: 14, cornerHeight: 14, transform: nil)
+            panel.position = CGPoint(x: size.width / 2, y: size.height * (L.isPhone ? 0.5 : 0.44))
         }
     }
 
     private func layoutSeatUILabelPositions() {
         guard seatLabelNodes.count == 4 else { return }
-        let labelOffset = max(10, L.cardHeight * 0.06)
-        let sideX = max(L.edgeSide * 0.35, 20)
+        let labelOffset = max(8, L.cardHeight * 0.05)
+        let sideX = L.isPhone ? L.edgeSide * 0.55 : max(L.edgeSide * 0.35, 20)
         let positions: [CGPoint] = [
             CGPoint(x: size.width / 2, y: L.edgeBottom + L.cardHeight + labelOffset),
             CGPoint(x: sideX, y: size.height / 2),
