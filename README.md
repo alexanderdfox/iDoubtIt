@@ -4,6 +4,16 @@ A **Cheat** / **I Doubt It** card game clone — iOS (Swift + SpriteKit) and a b
 
 [![wakatime](https://wakatime.com/badge/github/alex-d-fox/iDoubtIt.svg)](https://wakatime.com/badge/github/alex-d-fox/iDoubtIt)
 
+## Icons
+
+App and web icons use the game palette (blue gradient, green felt, suit symbols, gold “!” badge). Regenerate anytime:
+
+```bash
+python3 Scripts/generate_icons.py
+```
+
+Outputs: `iDoubtIt/Game.xcassets/AppIcon.appiconset/` (iOS) and `assets/icons/` (favicon, PWA, Apple touch icon).
+
 ## Play in the browser
 
 Open [`index.html`](index.html) in any modern browser (double-click or use a local server). No build step required.

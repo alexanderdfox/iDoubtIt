@@ -1,0 +1,23 @@
+{
+  "name": "iDoubtIt",
+  "short_name": "iDoubtIt",
+  "description": "Cheat / I Doubt It — play with friends or watch the AIs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d3366",
+  "theme_color": "#3380db",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
