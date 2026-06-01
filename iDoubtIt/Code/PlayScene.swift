@@ -69,8 +69,21 @@ class PlayScene: SKScene {
     private var lastPlayedCards: [Card] = []
     private var lastPlayedValue: Value?
     private var lastPlayerName: String = ""
+    private var currentRank: Value = .Ace
     private var turnIndicator: SKLabelNode?
+    private var rankIndicator: SKLabelNode?
+    private var pileCountLabel: SKLabelNode?
     private var selectedCards: [Card] = []
+    private var maxCardsPerPlay: Int { isWacky ? 6 : 4 }
+    
+    // Layout (matches Card 160×220; keeps hands on screen, cards upright)
+    private let layoutCardW: CGFloat = 160
+    private let layoutCardH: CGFloat = 220
+    private let layoutMinSpacing: CGFloat = 22
+    private let layoutPreferredSpacing: CGFloat = 42
+    private let layoutEdgeX: CGFloat = 88
+    private let layoutEdgeBottom: CGFloat = 108
+    private let layoutEdgeTop: CGFloat = 108
     
     // MARK: - Scene Lifecycle
     override func didMove(to view: SKView) {
@@ -81,6 +94,7 @@ class PlayScene: SKScene {
     // MARK: - Setup Methods
     private func setupScene() {
         self.isUserInteractionEnabled = true
+        isWacky = Pref.shared.isWacky
         setupBackground()
         setupDiscardPile()
         setupDeckAndPlayers()
@@ -91,15 +105,12 @@ class PlayScene: SKScene {
     }
     
     private func setupBackground() {
-        let bg = SKSpriteNode(color: UIColor.systemBlue, size: self.size)
-        bg.anchorPoint = .zero
-        bg.position = .zero
-        bg.zPosition = -10
-        addChild(bg)
+        GameTheme.addBackground(to: self, size: size)
+        GameTheme.addTableFelt(to: self, size: size)
     }
     
     private func setupBackButton() {
-        let backButton = button(name: "Back", color: .darkGray, label: "Back")
+        let backButton = button(name: "Back", color: GameTheme.buttonGray, label: "Back")
         backButton.position = CGPoint(x: backButton.size.width/2 + 20,
                                       y: size.height - backButton.size.height/2 - 20)
         backButton.zPosition = 999
@@ -107,31 +118,54 @@ class PlayScene: SKScene {
     }
     
     private func setupDiscardPile() {
-        // Create discard pile with card dimensions
         let cardSize = CGSize(width: 160, height: 220)
-        discardPile = SKSpriteNode(color: .yellow, size: cardSize)
+        discardPile = SKSpriteNode(color: .clear, size: cardSize)
         discardPile.position = CGPoint(x: size.width/2, y: size.height/2)
-        discardPile.alpha = 0.85
         discardPile.zPosition = CardLevel.board.rawValue + 5
         discardPile.name = "DiscardPile"
         
-        // Add a border to make it look like a card
-        let border = SKShapeNode(rectOf: cardSize, cornerRadius: 20)
-        border.strokeColor = .black
-        border.lineWidth = 2
-        border.zPosition = 1
-        discardPile.addChild(border)
+        let shadow = SKShapeNode(rectOf: cardSize, cornerRadius: 20)
+        shadow.fillColor = UIColor.black.withAlphaComponent(0.25)
+        shadow.strokeColor = .clear
+        shadow.position = CGPoint(x: 4, y: -5)
+        shadow.zPosition = 0
+        discardPile.addChild(shadow)
         
-        // Add label
+        let fill = SKShapeNode(rectOf: cardSize, cornerRadius: 20)
+        fill.fillColor = GameTheme.discardFill
+        fill.strokeColor = .black
+        fill.lineWidth = 2
+        fill.zPosition = 1
+        discardPile.addChild(fill)
+        
         let label = SKLabelNode(text: "Discard")
-        label.fontSize = 16
-        label.fontColor = .black
+        label.fontName = GameTheme.bodyFont
+        label.fontSize = 18
+        label.fontColor = UIColor(white: 0.1, alpha: 0.85)
         label.verticalAlignmentMode = .center
         label.horizontalAlignmentMode = .center
+        label.position = CGPoint(x: 0, y: 12)
         label.zPosition = 2
         discardPile.addChild(label)
         
+        pileCountLabel = SKLabelNode(text: "")
+        pileCountLabel?.fontName = GameTheme.titleFont
+        pileCountLabel?.fontSize = 28
+        pileCountLabel?.fontColor = UIColor(white: 0.1, alpha: 0.9)
+        pileCountLabel?.verticalAlignmentMode = .center
+        pileCountLabel?.horizontalAlignmentMode = .center
+        pileCountLabel?.position = CGPoint(x: 0, y: -18)
+        pileCountLabel?.zPosition = 2
+        if let pileCountLabel = pileCountLabel {
+            discardPile.addChild(pileCountLabel)
+        }
+        
         addChild(discardPile)
+    }
+    
+    private func updatePileCountLabel() {
+        let count = cardsOnDiscardPile().count
+        pileCountLabel?.text = count > 0 ? "\(count)" : ""
     }
     
     private func setupDeckAndPlayers() {
@@ -140,9 +174,9 @@ class PlayScene: SKScene {
             try createPlayers()
             try dealCards(from: deck)
             layoutAllHands()
+            updatePileCountLabel()
         } catch {
             print("Error setting up game: \(error.localizedDescription)")
-            // Fallback to basic setup
             createBasicPlayers()
         }
     }
@@ -156,10 +190,11 @@ class PlayScene: SKScene {
     }
     
     private func createPlayers() throws {
-        let human = Player(human: true, playerName: "Human", level: .easy)
-        let ai1 = Player(human: false, playerName: "AI 1", level: .easy)
-        let ai2 = Player(human: false, playerName: "AI 2", level: .easy)
-        let ai3 = Player(human: false, playerName: "AI 3", level: .easy)
+        let level = Difficulty(rawValue: Pref.shared.difficulty) ?? .easy
+        let human = Player(human: true, playerName: "Human", level: level, wacky: isWacky)
+        let ai1 = Player(human: false, playerName: "AI 1", level: level, wacky: isWacky)
+        let ai2 = Player(human: false, playerName: "AI 2", level: level, wacky: isWacky)
+        let ai3 = Player(human: false, playerName: "AI 3", level: level, wacky: isWacky)
         
         players = [human, ai1, ai2, ai3]
         
@@ -169,10 +204,11 @@ class PlayScene: SKScene {
     }
     
     private func createBasicPlayers() {
-        let human = Player(human: true, playerName: "Human", level: .easy)
-        let ai1 = Player(human: false, playerName: "AI 1", level: .easy)
-        let ai2 = Player(human: false, playerName: "AI 2", level: .easy)
-        let ai3 = Player(human: false, playerName: "AI 3", level: .easy)
+        let level = Difficulty(rawValue: Pref.shared.difficulty) ?? .easy
+        let human = Player(human: true, playerName: "Human", level: level, wacky: isWacky)
+        let ai1 = Player(human: false, playerName: "AI 1", level: level, wacky: isWacky)
+        let ai2 = Player(human: false, playerName: "AI 2", level: level, wacky: isWacky)
+        let ai3 = Player(human: false, playerName: "AI 3", level: level, wacky: isWacky)
         
         players = [human, ai1, ai2, ai3]
         
@@ -193,19 +229,32 @@ class PlayScene: SKScene {
     }
     
     private func setupTurnIndicator() {
+        let hudY = size.height - layoutEdgeTop - layoutCardH - 36
+        let panel = GameTheme.makeHUDPanel(width: min(size.width - 40, 280), height: 72)
+        panel.position = CGPoint(x: size.width/2, y: hudY + 14)
+        panel.zPosition = 999
+        addChild(panel)
+        
         turnIndicator = SKLabelNode(text: "Human's Turn")
-        turnIndicator?.fontSize = 24
+        turnIndicator?.fontName = GameTheme.titleFont
+        turnIndicator?.fontSize = 22
         turnIndicator?.fontColor = .white
-        turnIndicator?.position = CGPoint(x: size.width/2, y: size.height - 60)
+        turnIndicator?.position = CGPoint(x: size.width/2, y: hudY + 28)
         turnIndicator?.zPosition = 1000
         
-        if let turnIndicator = turnIndicator {
-            addChild(turnIndicator)
-        }
+        rankIndicator = SKLabelNode(text: "Claim: Ace")
+        rankIndicator?.fontName = GameTheme.bodyFont
+        rankIndicator?.fontSize = 17
+        rankIndicator?.fontColor = GameTheme.gold
+        rankIndicator?.position = CGPoint(x: size.width/2, y: hudY)
+        rankIndicator?.zPosition = 1000
+        
+        if let turnIndicator = turnIndicator { addChild(turnIndicator) }
+        if let rankIndicator = rankIndicator { addChild(rankIndicator) }
     }
     
     private func setupDoubtButton() {
-        doubtButton = button(name: "Doubt", color: .red, label: "Doubt")
+        doubtButton = button(name: "Doubt", color: GameTheme.buttonRed, label: "Doubt")
         guard let doubtButton = doubtButton else { return }
         
         doubtButton.zPosition = 1000
@@ -216,7 +265,7 @@ class PlayScene: SKScene {
     }
     
     private func setupPlayButton() {
-        playButton = button(name: "Play", color: .green, label: "Play")
+        playButton = button(name: "Play", color: GameTheme.buttonGreen, label: "Play")
         guard let playButton = playButton else { return }
         
         playButton.zPosition = 1000
@@ -228,49 +277,31 @@ class PlayScene: SKScene {
     }
     
     private func positionDoubtButton() {
-        guard let doubtButton = doubtButton,
-              let human = players.first(where: { $0.isHuman }) else { return }
-        
-        let hand = human.playerHand
-        if !hand.isEmpty {
-            let spacing: CGFloat = 50
-            let totalWidth = spacing * CGFloat(hand.count - 1)
-            let startX = size.width/2 - totalWidth/2
-            let centerX = startX + totalWidth / 2 - 80
-            let handY: CGFloat = 120
-            let spacingAbove: CGFloat = 170
-            
-            // Position doubt button to the left of center
-            let buttonSpacing: CGFloat = 80 // Space between buttons
-            doubtButton.position = CGPoint(x: centerX - buttonSpacing/2, y: handY + spacingAbove)
-        } else {
-            doubtButton.position = CGPoint(x: size.width/2 - 40, y: 200)
-        }
+        positionActionButtons()
     }
     
     private func positionPlayButton() {
-        guard let playButton = playButton,
-              let human = players.first(where: { $0.isHuman }) else { return }
-        
-        let hand = human.playerHand
-        if !hand.isEmpty {
-            let spacing: CGFloat = 50
-            let totalWidth = spacing * CGFloat(hand.count - 1)
-            let startX = size.width/2 - totalWidth/2
-            let centerX = startX + totalWidth / 2 + 80
-            let handY: CGFloat = 120
-            let spacingAbove: CGFloat = 170 // Same height as doubt button
-            
-            // Position play button to the right of center
-            let buttonSpacing: CGFloat = 80 // Space between buttons
-            playButton.position = CGPoint(x: centerX + buttonSpacing/2, y: handY + spacingAbove)
-        } else {
-            playButton.position = CGPoint(x: size.width/2 + 40, y: 200)
-        }
+        positionActionButtons()
+    }
+    
+    private func positionActionButtons() {
+        let handCenterY = layoutEdgeBottom + layoutCardH / 2
+        let buttonY = min(handCenterY + layoutCardH / 2 + 56, size.height * 0.38)
+        let spread: CGFloat = min(100, size.width * 0.12)
+        doubtButton?.position = CGPoint(x: size.width / 2 - spread, y: buttonY)
+        playButton?.position = CGPoint(x: size.width / 2 + spread, y: buttonY)
+    }
+    
+    private func spacingFor(count: Int, span: CGFloat, cardExtent: CGFloat) -> CGFloat {
+        guard count > 1 else { return 0 }
+        let needed = layoutPreferredSpacing * CGFloat(count - 1) + cardExtent
+        if needed <= span { return layoutPreferredSpacing }
+        return max(layoutMinSpacing, (span - cardExtent) / CGFloat(count - 1))
     }
     
     // MARK: - Game Start
     private func startGame() {
+        updateRankIndicator()
         if let firstPlayer = players.first, firstPlayer.isHuman {
             gameState = .waitingForHuman
             updateTurnIndicator()
@@ -292,6 +323,7 @@ class PlayScene: SKScene {
         for player in players {
             layoutHand(for: player)
         }
+        positionActionButtons()
     }
     
     private func layoutHand(for player: Player) {
@@ -326,50 +358,54 @@ class PlayScene: SKScene {
     
     private func layoutHand(_ player: Player, at position: HandPosition, isFaceUp: Bool, isInteractive: Bool) {
         let hand = player.playerHand
-        let spacing: CGFloat = 50
+        let total = hand.count
+        guard total > 0 else { return }
+        
+        let availW = size.width - layoutEdgeX * 2
+        let availH = size.height - layoutEdgeTop - layoutEdgeBottom - 80
+        
+        let spacing: CGFloat
+        let positions: [CGPoint]
+        
+        switch position {
+        case .bottom:
+            spacing = spacingFor(count: total, span: availW, cardExtent: layoutCardW)
+            let span = spacing * CGFloat(total - 1)
+            let startX = size.width / 2 - span / 2
+            let y = layoutEdgeBottom + layoutCardH / 2
+            positions = (0..<total).map { CGPoint(x: startX + CGFloat($0) * spacing, y: y) }
+            
+        case .top:
+            spacing = spacingFor(count: total, span: availW, cardExtent: layoutCardW)
+            let span = spacing * CGFloat(total - 1)
+            let startX = size.width / 2 - span / 2
+            let y = size.height - layoutEdgeTop - layoutCardH / 2
+            positions = (0..<total).map { CGPoint(x: startX + CGFloat($0) * spacing, y: y) }
+            
+        case .left:
+            spacing = spacingFor(count: total, span: availH, cardExtent: layoutCardH)
+            let span = spacing * CGFloat(total - 1)
+            let startY = size.height / 2 + span / 2
+            let x = layoutEdgeX
+            positions = (0..<total).map { CGPoint(x: x, y: startY - CGFloat($0) * spacing) }
+            
+        case .right:
+            spacing = spacingFor(count: total, span: availH, cardExtent: layoutCardH)
+            let span = spacing * CGFloat(total - 1)
+            let startY = size.height / 2 + span / 2
+            let x = size.width - layoutEdgeX
+            positions = (0..<total).map { CGPoint(x: x, y: startY - CGFloat($0) * spacing) }
+        }
         
         for (i, card) in hand.enumerated() {
             if card.parent == nil { addChild(card) }
             
             card.setScale(1.0)
+            card.zRotation = 0
             card.facedUp = isFaceUp
             card.isUserInteractionEnabled = isInteractive
-            card.zPosition = CardLevel.board.rawValue
-            
-            let cardPosition = calculateCardPosition(for: position, index: i, totalCards: hand.count, spacing: spacing)
-            card.position = cardPosition.position
-            card.zRotation = cardPosition.rotation
-        }
-    }
-    
-    private func calculateCardPosition(for position: HandPosition, index: Int, totalCards: Int, spacing: CGFloat) -> (position: CGPoint, rotation: CGFloat) {
-        let totalWidth = spacing * CGFloat(totalCards - 1)
-        let totalHeight = spacing * CGFloat(totalCards - 1)
-        
-        switch position {
-        case .bottom:
-            let startX = size.width/2 - totalWidth/2
-            let x = startX + CGFloat(index) * spacing
-            let y: CGFloat = 120
-            return (CGPoint(x: x, y: y), 0)
-            
-        case .top:
-            let startX = size.width/2 - totalWidth/2
-            let x = startX + CGFloat(index) * spacing
-            let y = size.height - 120
-            return (CGPoint(x: x, y: y), .pi)
-            
-        case .left:
-            let startY = size.height/2 + totalHeight/2
-            let x: CGFloat = 120
-            let y = startY - CGFloat(index) * spacing
-            return (CGPoint(x: x, y: y), .pi/2)
-            
-        case .right:
-            let startY = size.height/2 + totalHeight/2
-            let x = size.width - 120
-            let y = startY - CGFloat(index) * spacing
-            return (CGPoint(x: x, y: y), -.pi/2)
+            card.zPosition = CardLevel.board.rawValue + CGFloat(i)
+            card.position = positions[i]
         }
     }
     
@@ -381,33 +417,28 @@ class PlayScene: SKScene {
         let now = CACurrentMediaTime()
         
         for node in nodesAtPoint {
-            if handleBackButton(node) { return }
-            if handleDoubtButton(node) { return }
-            if handlePlayButton(node) { return }
+            if isButton(node, named: "Back") {
+                goToMainMenu()
+                return
+            }
+            if isButton(node, named: "Doubt") {
+                handleHumanDoubt()
+                return
+            }
+            if isButton(node, named: "Play") {
+                handleHumanPlay()
+                return
+            }
             if handleCardSelection(node, at: now) { return }
         }
     }
     
-    private func handleBackButton(_ node: SKNode) -> Bool {
-        if node.name == "Backbtn" || node.name == "Backlabel" {
-            goToMainMenu()
-            return true
-        }
-        return false
-    }
-    
-    private func handleDoubtButton(_ node: SKNode) -> Bool {
-        if node.name == "Doubt" {
-            handleHumanDoubt()
-            return true
-        }
-        return false
-    }
-    
-    private func handlePlayButton(_ node: SKNode) -> Bool {
-        if node.name == "Play" {
-            handleHumanPlay()
-            return true
+    private func isButton(_ node: SKNode, named name: String) -> Bool {
+        var current: SKNode? = node
+        let target = "\(name)btn"
+        while let currentNode = current {
+            if currentNode.name == target { return true }
+            current = currentNode.parent
         }
         return false
     }
@@ -456,7 +487,7 @@ class PlayScene: SKScene {
         // Check if card was dropped on discard pile
         if card.position.distance(to: discardPile.position) < 100 {
             // Card was dropped on discard pile - add it to selected cards
-            if !selectedCards.contains(card) {
+            if !selectedCards.contains(where: { $0 === card }) {
                 toggleCardSelection(card)
             }
         }
@@ -484,21 +515,19 @@ class PlayScene: SKScene {
     }
     
     private func returnCardToHand(_ card: Card) {
-        guard let owner = players.first(where: { $0.playerHand.contains(card) }) else { return }
+        guard let owner = players.first(where: { $0.playerHand.contains(where: { $0 === card }) }) else { return }
         layoutHand(for: owner)
     }
     
     private func toggleCardSelection(_ card: Card) {
-        if selectedCards.contains(card) {
-            // Deselect card
-            selectedCards.removeAll { $0 == card }
-            card.setScale(1.0)
-            card.zPosition = CardLevel.board.rawValue
+        if selectedCards.contains(where: { $0 === card }) {
+            selectedCards.removeAll { $0 === card }
+            card.setSelected(false)
+        } else if selectedCards.count >= maxCardsPerPlay {
+            return
         } else {
-            // Select card
             selectedCards.append(card)
-            card.setScale(1.1)
-            card.zPosition = CardLevel.moving.rawValue
+            card.setSelected(true)
         }
         
         updatePlayButtonVisibility()
@@ -519,15 +548,15 @@ class PlayScene: SKScene {
                 throw GameError.invalidGameState
             }
             
-            guard let lastCard = discardPile.children.last as? Card else {
-                throw GameError.noCardsInDiscardPile
+            guard canCallDoubt(for: players.first(where: { $0.isHuman })) else {
+                return
             }
             
             guard let human = players.first(where: { $0.isHuman }) else {
                 throw GameError.noHumanPlayerFound
             }
             
-            try resolveDoubt(calledBy: human, lastCard: lastCard)
+            try resolveDoubt(calledBy: human)
             nextTurn()
             
         } catch {
@@ -546,20 +575,25 @@ class PlayScene: SKScene {
                 return
             }
             
+            guard selectedCards.count <= maxCardsPerPlay else {
+                print("You can play at most \(maxCardsPerPlay) cards at once")
+                return
+            }
+            
             guard let human = players.first(where: { $0.isHuman }) else {
                 throw GameError.noHumanPlayerFound
             }
             
-            // Play all selected cards
-            for card in selectedCards {
+            let played = selectedCards
+            for card in played {
                 try moveCard(card, from: human, to: discardPile)
-                card.facedUp = true
+                card.facedUp = false
             }
             
-            // Update game state
-            lastPlayedCards.append(contentsOf: selectedCards)
-            lastPlayedValue = selectedCards.first?.value
+            lastPlayedCards = played
+            lastPlayedValue = currentRank
             lastPlayerName = human.name ?? ""
+            advanceRank()
             
             // Clear selection
             selectedCards.removeAll()
@@ -582,40 +616,73 @@ class PlayScene: SKScene {
         }
     }
     
-    private func resolveDoubt(calledBy player: Player, lastCard: Card) throws {
-        guard let lastValue = lastPlayedValue,
-              let lastPlayer = players.first(where: { $0.name == lastPlayerName }) else {
+    private func canCallDoubt(for player: Player?) -> Bool {
+        guard let player = player,
+              !lastPlayedCards.isEmpty,
+              lastPlayerName != player.name else {
+            return false
+        }
+        return true
+    }
+    
+    private func cardMatchesClaim(_ card: Card, claim: Value) -> Bool {
+        if card.value == claim { return true }
+        if isWacky && card.value == .Joker { return true }
+        return false
+    }
+    
+    private func resolveDoubt(calledBy doubter: Player) throws {
+        guard let claim = lastPlayedValue,
+              let cheater = players.first(where: { $0.name == lastPlayerName }),
+              !lastPlayedCards.isEmpty else {
             throw GameError.invalidGameState
         }
         
-        let actualCards = lastPlayer.playerHand.filter { $0.value == lastValue }
-        let totalCards = actualCards.count + lastPlayedCards.count
+        let lied = lastPlayedCards.contains { !cardMatchesClaim($0, claim: claim) }
+        let loser = lied ? cheater : doubter
         
-        if totalCards > 4 {
-            // Doubt successful - last player gets all cards
-            print("\(player.name ?? "Player") called doubt successfully! \(lastPlayer.name ?? "Unknown") gets all cards")
-            redistributeCards(from: lastPlayedCards, to: lastPlayer)
+        if lied {
+            print("\(doubter.name ?? "Player") caught \(cheater.name ?? "Unknown") bluffing!")
         } else {
-            // Doubt failed - calling player gets all cards
-            print("\(player.name ?? "Player") called doubt incorrectly! \(player.name ?? "Player") gets all cards")
-            redistributeCards(from: lastPlayedCards, to: player)
+            print("\(doubter.name ?? "Player") doubted incorrectly!")
         }
         
+        redistributeDiscardPile(to: loser)
         lastPlayedCards.removeAll()
         layoutAllHands()
+        updateRankIndicator()
+        updatePileCountLabel()
     }
     
-    private func redistributeCards(from cards: [Card], to player: Player) {
-        for card in cards {
+    private func cardsOnDiscardPile() -> [Card] {
+        discardPile.children.compactMap { $0 as? Card }
+    }
+    
+    private func redistributeDiscardPile(to player: Player) {
+        for card in cardsOnDiscardPile() {
             card.removeFromParent()
             player.addCard(card)
         }
     }
     
+    private func advanceRank() {
+        let nextRaw = currentRank.rawValue + 1
+        if let next = Value(rawValue: nextRaw) {
+            currentRank = next
+        } else {
+            currentRank = .Ace
+        }
+        updateRankIndicator()
+    }
+    
+    private func updateRankIndicator() {
+        rankIndicator?.text = "Claim: \(currentRank.description)"
+    }
+    
     // MARK: - Card Movement
     private func moveCardToDiscard(_ card: Card) {
         do {
-            guard let owner = players.first(where: { $0.playerHand.contains(card) }) else {
+            guard let owner = players.first(where: { $0.playerHand.contains(where: { $0 === card }) }) else {
                 throw GameError.cardNotFound
             }
             
@@ -640,12 +707,12 @@ class PlayScene: SKScene {
     
     private func aiMoveCardToDiscard(_ card: Card) {
         do {
-            guard let owner = players.first(where: { $0.playerHand.contains(card) }) else {
+            guard let owner = players.first(where: { $0.playerHand.contains(where: { $0 === card }) }) else {
                 throw GameError.cardNotFound
             }
             
             try moveCard(card, from: owner, to: discardPile)
-            card.facedUp = true
+            card.facedUp = false
             layoutHand(for: owner)
             
         } catch {
@@ -654,15 +721,17 @@ class PlayScene: SKScene {
     }
     
     private func moveCard(_ card: Card, from player: Player, to destination: SKNode) throws {
-        guard player.playerHand.contains(card) else {
+        guard player.playerHand.contains(where: { $0 === card }) else {
             throw GameError.cardNotFound
         }
         
-        player.playerHand.removeAll(where: { $0 == card })
+        player.playerHand.removeAll { $0 === card }
         card.removeFromParent()
+        card.setSelected(false)
         destination.addChild(card)
         card.position = CGPoint.zero
         card.zPosition = CardLevel.board.rawValue + 5
+        updatePileCountLabel()
     }
     
     private func updateGameState(after card: Card, playedBy player: Player) {
@@ -726,8 +795,7 @@ class PlayScene: SKScene {
     
     private func clearCardSelection() {
         for card in selectedCards {
-            card.setScale(1.0)
-            card.zPosition = CardLevel.board.rawValue
+            card.setSelected(false)
         }
         selectedCards.removeAll()
         
@@ -740,12 +808,14 @@ class PlayScene: SKScene {
     private func updateTurnIndicator() {
         guard let currentPlayer = players[safe: currentPlayerIndex] else { return }
         turnIndicator?.text = "\(currentPlayer.name ?? "Player")'s Turn"
+        updateRankIndicator()
         
-        // Update play button state based on turn
         if currentPlayer.isHuman {
             updatePlayButtonVisibility()
+            doubtButton?.alpha = canCallDoubt(for: currentPlayer) ? 1.0 : 0.35
         } else {
-            playButton?.alpha = 0.3 // Greyed out during AI turns
+            playButton?.alpha = 0.3
+            doubtButton?.alpha = 0.35
         }
     }
     
@@ -773,18 +843,16 @@ class PlayScene: SKScene {
     }
     
     private func executeAITurn(for player: Player) throws {
-        let valueToPlay = lastPlayedValue ?? player.playerHand.randomElement()?.value ?? .Ace
-        
-        let shouldCallDoubt = player.shouldCallDoubt(
-            lastValue: valueToPlay,
+        if canCallDoubt(for: player),
+           let claim = lastPlayedValue,
+           player.shouldCallDoubt(
+            lastValue: claim,
             numCardsPlayed: lastPlayedCards.count,
-            lastPlayerCount: player.playerHand.count
-        )
-        
-        if shouldCallDoubt {
-            try handleAIDoubt(calledBy: player)
+            lastPlayerCount: players.first(where: { $0.name == lastPlayerName })?.cardCount ?? 0
+           ) {
+            try resolveDoubt(calledBy: player)
         } else {
-            try handleAICardPlay(for: player, value: valueToPlay)
+            try handleAICardPlay(for: player, value: currentRank)
         }
         
         if player.playerHand.isEmpty {
@@ -795,45 +863,34 @@ class PlayScene: SKScene {
         nextTurn()
     }
     
-    private func handleAIDoubt(calledBy player: Player) throws {
-        print("\(player.name ?? "AI") calls doubt!")
-        
-        guard let lastValue = lastPlayedValue,
-              let lastPlayer = players.first(where: { $0.name == lastPlayerName }) else {
-            throw GameError.invalidGameState
-        }
-        
-        let actualCards = lastPlayer.playerHand.filter { $0.value == lastValue }
-        let totalCards = actualCards.count + lastPlayedCards.count
-        
-        if totalCards > 4 {
-            print("\(player.name ?? "AI") called doubt successfully! \(lastPlayer.name ?? "Unknown") gets all cards")
-            redistributeCards(from: lastPlayedCards, to: lastPlayer)
-        } else {
-            print("\(player.name ?? "AI") called doubt incorrectly! \(player.name ?? "AI") gets all cards")
-            redistributeCards(from: lastPlayedCards, to: player)
-        }
-        
-        lastPlayedCards.removeAll()
-        layoutAllHands()
-    }
-    
     private func handleAICardPlay(for player: Player, value: Value) throws {
-        let cardsToPlay = player.playHand(currValue: value)
+        let cardsToPlay = player.playHandWithBluffing(currValue: value, maxCards: maxCardsPerPlay)
+        guard !cardsToPlay.isEmpty else {
+            if let fallback = player.playerHand.first {
+                try moveCard(fallback, from: player, to: discardPile)
+                lastPlayedCards = [fallback]
+                lastPlayedValue = value
+                lastPlayerName = player.name ?? ""
+                advanceRank()
+                layoutHand(for: player)
+            }
+            return
+        }
         
         for card in cardsToPlay {
             aiMoveCardToDiscard(card)
         }
         
-        lastPlayedCards.append(contentsOf: cardsToPlay)
+        lastPlayedCards = cardsToPlay
         lastPlayedValue = value
         lastPlayerName = player.name ?? ""
+        advanceRank()
         
-        let matchingCards = player.findCardsInHand(value: value).count
-        if matchingCards == 0 && !cardsToPlay.isEmpty {
-            print("\(player.name ?? "AI") bluffed and played \(cardsToPlay.count) cards")
+        let bluffed = cardsToPlay.contains { !cardMatchesClaim($0, claim: value) }
+        if bluffed {
+            print("\(player.name ?? "AI") bluffed — played \(cardsToPlay.count) card(s)")
         } else {
-            print("\(player.name ?? "AI") played \(cardsToPlay.count) cards")
+            print("\(player.name ?? "AI") played \(cardsToPlay.count) card(s)")
         }
     }
     
@@ -850,12 +907,33 @@ class PlayScene: SKScene {
     }
     
     private func showGameOverMessage(winner: String) {
-        let gameOverLabel = SKLabelNode(text: "Game Over! \(winner) wins!")
-        gameOverLabel.fontSize = 48
+        let overlay = SKShapeNode(rectOf: size)
+        overlay.fillColor = UIColor.black.withAlphaComponent(0.45)
+        overlay.strokeColor = .clear
+        overlay.position = CGPoint(x: size.width/2, y: size.height/2)
+        overlay.zPosition = 1999
+        addChild(overlay)
+        
+        let panel = GameTheme.makeHUDPanel(width: min(size.width - 48, 320), height: 100)
+        panel.position = CGPoint(x: size.width/2, y: size.height/2)
+        panel.zPosition = 2000
+        addChild(panel)
+        
+        let gameOverLabel = SKLabelNode(text: "Game Over!")
+        gameOverLabel.fontName = GameTheme.titleFont
+        gameOverLabel.fontSize = 32
         gameOverLabel.fontColor = .white
-        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2)
-        gameOverLabel.zPosition = 1000
+        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2 + 18)
+        gameOverLabel.zPosition = 2001
         addChild(gameOverLabel)
+        
+        let winnerLabel = SKLabelNode(text: "\(winner) wins!")
+        winnerLabel.fontName = GameTheme.bodyFont
+        winnerLabel.fontSize = 22
+        winnerLabel.fontColor = GameTheme.gold
+        winnerLabel.position = CGPoint(x: size.width/2, y: size.height/2 - 18)
+        winnerLabel.zPosition = 2001
+        addChild(winnerLabel)
     }
     
     // MARK: - Navigation

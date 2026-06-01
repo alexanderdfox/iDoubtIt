@@ -55,7 +55,7 @@ class Pref {
             if let hex = prefs.string(forKey: "BackgroundColor") {
                 return UIColor(hex: hex)
             } else {
-                let defaultColor = UIColor.systemBlue
+                let defaultColor = GameTheme.backgroundTop
                 prefs.set(defaultColor.toHexString(), forKey: "BackgroundColor")
                 return defaultColor
             }

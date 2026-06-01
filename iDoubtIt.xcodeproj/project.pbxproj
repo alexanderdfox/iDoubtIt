@@ -21,6 +21,7 @@
 		02B5090E1D7A720700B6F9B2 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B509061D7A720700B6F9B2 /* Player.swift */; };
 		02B5090F1D7A720700B6F9B2 /* SettingsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B509071D7A720700B6F9B2 /* SettingsMenu.swift */; };
 		02FDD0631DB54869002B819E /* Buttons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02FDD0621DB54869002B819E /* Buttons.swift */; };
+		02THEME021DB54869002B819F /* GameTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02THEME011DB54869002B819F /* GameTheme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +40,7 @@
 		02B509061D7A720700B6F9B2 /* Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Player.swift; path = Code/Player.swift; sourceTree = "<group>"; };
 		02B509071D7A720700B6F9B2 /* SettingsMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SettingsMenu.swift; path = Code/SettingsMenu.swift; sourceTree = "<group>"; };
 		02FDD0621DB54869002B819E /* Buttons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Buttons.swift; path = Code/Buttons.swift; sourceTree = "<group>"; };
+		02THEME011DB54869002B819F /* GameTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GameTheme.swift; path = Code/GameTheme.swift; sourceTree = "<group>"; };
 		D3EFEB061CD3C43400014542 /* iDoubtIt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iDoubtIt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -76,6 +78,7 @@
 				02B509061D7A720700B6F9B2 /* Player.swift */,
 				02B509071D7A720700B6F9B2 /* SettingsMenu.swift */,
 				02FDD0621DB54869002B819E /* Buttons.swift */,
+				02THEME011DB54869002B819F /* GameTheme.swift */,
 			);
 			name = Swift;
 			sourceTree = "<group>";
@@ -143,7 +146,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 0730;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2650;
 				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					D3EFEB051CD3C43400014542 = {
@@ -199,6 +202,7 @@
 				02B5090E1D7A720700B6F9B2 /* Player.swift in Sources */,
 				02B5090B1D7A720700B6F9B2 /* PlayScene.swift in Sources */,
 				02B509091D7A720700B6F9B2 /* Card.swift in Sources */,
+				02THEME021DB54869002B819F /* GameTheme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +262,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MSAG5KPFBE;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -279,6 +284,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -319,6 +325,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MSAG5KPFBE;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -333,6 +340,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 12.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -348,8 +356,8 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = MSAG5KPFBE;
 				INFOPLIST_FILE = "$(SRCROOT)/iDoubtIt/Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -370,8 +378,8 @@
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = "Brand Assets";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = MSAG5KPFBE;
 				INFOPLIST_FILE = "$(SRCROOT)/iDoubtIt/Info.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

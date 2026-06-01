@@ -72,13 +72,15 @@ class Card: SKSpriteNode {
     // MARK: - Private Properties
     private var labelNode: SKLabelNode!
     private var bgNode: SKShapeNode!
+    private var shadowNode: SKShapeNode!
+    private var selectionBorder: SKShapeNode!
     var touchOffset = CGPoint.zero
     
     // MARK: - Constants
     private static let cardSize = CGSize(width: 160, height: 220)
     private static let cornerRadius: CGFloat = 20
     private static let lineWidth: CGFloat = 2
-    private static let emojiFontSize: CGFloat = 180
+    private static var emojiFontSize: CGFloat { cardSize.height * 0.88 }
     
     // MARK: - Initializers
     required init?(coder aDecoder: NSCoder) { 
@@ -103,18 +105,51 @@ class Card: SKSpriteNode {
     
     // MARK: - Setup Methods
     private func setupCard() {
+        setupShadow()
         setupBackground()
+        setupSelectionBorder()
         setupLabel()
+    }
+    
+    private func setupShadow() {
+        shadowNode = SKShapeNode(rectOf: Card.cardSize, cornerRadius: Card.cornerRadius)
+        shadowNode.fillColor = UIColor.black.withAlphaComponent(0.28)
+        shadowNode.strokeColor = .clear
+        shadowNode.position = CGPoint(x: 4, y: -5)
+        shadowNode.zPosition = -1
+        addChild(shadowNode)
     }
     
     private func setupBackground() {
         bgNode = SKShapeNode(rectOf: Card.cardSize, cornerRadius: Card.cornerRadius)
-        bgNode.fillColor = backgroundColor
+        bgNode.fillColor = currentFillColor
         bgNode.strokeColor = .black
         bgNode.lineWidth = Card.lineWidth
         bgNode.zPosition = 0
         bgNode.isUserInteractionEnabled = false
         addChild(bgNode)
+        
+        let inner = SKShapeNode(
+            rectOf: CGSize(width: Card.cardSize.width - 10, height: Card.cardSize.height - 10),
+            cornerRadius: Card.cornerRadius - 4
+        )
+        inner.fillColor = .clear
+        inner.strokeColor = UIColor.white.withAlphaComponent(facedUp ? 0.35 : 0.15)
+        inner.lineWidth = 1
+        inner.zPosition = 0.5
+        inner.name = "innerHighlight"
+        bgNode.addChild(inner)
+    }
+    
+    private func setupSelectionBorder() {
+        let borderSize = CGSize(width: Card.cardSize.width + 8, height: Card.cardSize.height + 8)
+        selectionBorder = SKShapeNode(rectOf: borderSize, cornerRadius: Card.cornerRadius + 2)
+        selectionBorder.fillColor = .clear
+        selectionBorder.strokeColor = GameTheme.gold
+        selectionBorder.lineWidth = 4
+        selectionBorder.zPosition = 2
+        selectionBorder.isHidden = true
+        addChild(selectionBorder)
     }
     
     private func setupLabel() {
@@ -130,18 +165,18 @@ class Card: SKSpriteNode {
     
     private func updateCardDisplay() {
         labelNode.text = facedUp ? emojiIcon : "🎴"
-        labelNode.fontColor = textColor
+        labelNode.fontColor = facedUp ? textColor : .white
+        labelNode.fontSize = facedUp ? Card.emojiFontSize : Card.cardSize.height * 0.72
+        bgNode.fillColor = currentFillColor
     }
     
     // MARK: - Computed Properties
-    private var backgroundColor: UIColor {
+    private var currentFillColor: UIColor {
+        if !facedUp { return GameTheme.cardBackFill }
         switch suit {
-        case .Hearts, .Diamonds: 
-            return UIColor(red: 1.0, green: 0.85, blue: 0.85, alpha: 1.0)
-        case .Spades, .Clubs:    
-            return UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
-        case .NoSuit:             
-            return .yellow
+        case .Hearts, .Diamonds: return GameTheme.cardRedFill
+        case .Spades, .Clubs: return GameTheme.cardBlackFill
+        case .NoSuit: return GameTheme.cardJokerFill
         }
     }
     
@@ -185,6 +220,17 @@ class Card: SKSpriteNode {
             SKAction.scale(to: 1.0, duration: 0.1)
         ])
         run(highlightAction)
+    }
+    
+    func setSelected(_ selected: Bool) {
+        selectionBorder.isHidden = !selected
+        if selected {
+            run(SKAction.scale(to: 1.08, duration: 0.12))
+            zPosition = CardLevel.moving.rawValue
+        } else {
+            run(SKAction.scale(to: 1.0, duration: 0.1))
+            zPosition = CardLevel.board.rawValue
+        }
     }
     
     // MARK: - Touch Handling

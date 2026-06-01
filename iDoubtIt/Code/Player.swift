@@ -82,9 +82,9 @@ class Player: SKSpriteNode {
         self.zPosition = 10
     }
     
-    init(human: Bool, playerName: String, level: Difficulty = .medium) {
+    init(human: Bool, playerName: String, level: Difficulty = .medium, wacky: Bool = false) {
         self.isHuman = human
-        self.isWacky = false
+        self.isWacky = wacky
         self.difficulty = level
         self.aiBehavior = AIBehavior(difficulty: level)
         
@@ -109,7 +109,7 @@ class Player: SKSpriteNode {
     }
     
     func removeCard(_ card: Card) -> Bool {
-        guard let index = playerHand.firstIndex(of: card) else {
+        guard let index = playerHand.firstIndex(where: { $0 === card }) else {
             return false
         }
         
@@ -224,39 +224,28 @@ class Player: SKSpriteNode {
     }
     
     func playHandWithBluffing(currValue: Value, maxCards: Int = 4) -> [Card] {
-        let matchingCards = findCardsInHand(value: currValue)
-        var cardsToPlay: [Card] = []
+        var indices = findCardsInHand(value: currValue)
         
-        // Always play matching cards if available
-        if !matchingCards.isEmpty {
-            for index in matchingCards.sorted(by: >) {
-                if index < playerHand.count {
-                    cardsToPlay.append(playerHand[index])
-                }
+        if indices.isEmpty {
+            if shouldBluff(currValue: currValue, matchingCards: 0, maxCards: maxCards) {
+                let count = min(maxCards, max(1, Int.random(in: 1...maxCards)))
+                indices = findRandomCards(count: count)
+            } else {
+                indices = findRandomCards(count: 1)
             }
-            removeCards(cardsToPlay)
+        } else if indices.count < maxCards,
+                  shouldBluff(currValue: currValue, matchingCards: indices.count, maxCards: maxCards) {
+            let extra = findRandomCards(count: maxCards - indices.count, excluding: indices)
+            indices = indices.union(extra)
         }
         
-        // Decide whether to bluff
-        if shouldBluff(currValue: currValue, matchingCards: matchingCards.count, maxCards: maxCards) {
-            let bluffCount = maxCards - cardsToPlay.count
-            let bluffCards = findRandomCards(count: bluffCount)
-            
-            for index in bluffCards.sorted(by: >) {
-                if index < playerHand.count {
-                    cardsToPlay.append(playerHand[index])
-                }
-            }
-            
-            // Remove bluff cards
-            for index in bluffCards.sorted(by: >) {
-                if index < playerHand.count {
-                    playerHand.remove(at: index)
-                }
-            }
+        if indices.count > maxCards {
+            indices = IndexSet(indices.sorted().prefix(maxCards))
         }
         
-        return cardsToPlay
+        let cards = getCards(at: indices)
+        removeCards(cards)
+        return cards
     }
     
     // MARK: - AI Decision Making

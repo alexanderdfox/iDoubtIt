@@ -36,11 +36,10 @@ class GameViewController: UIViewController {
         // Create and configure the main menu scene
         let scene = MainMenu(size: skView.bounds.size)
         scene.scaleMode = .aspectFill
-        scene.backgroundColor = UIColor.systemBlue  // Plain blue background
+        scene.backgroundColor = GameTheme.backgroundTop
         
-        // Configure SKView debugging info (optional)
-        skView.showsFPS = true
-        skView.showsNodeCount = true
+        skView.showsFPS = false
+        skView.showsNodeCount = false
         skView.ignoresSiblingOrder = false
         
         // Present the scene with a smooth fade transition
