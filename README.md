@@ -12,6 +12,11 @@ Open [`index.html`](index.html) in any modern browser (double-click or use a loc
 
 Open `iDoubtIt.xcodeproj` in Xcode and run on a simulator or device.
 
+- **Play** — 1–4 humans (pass-and-play); empty seats are AI. Set human count in Settings.
+- **Watch AI** — four AIs play automatically (spectator mode).
+- **Settings** — wacky mode, sound/music with volume, AI difficulty (Easy / Medium / Hard).
+- **Extras on iOS** — haptic feedback on card select and key actions; active-seat highlight; toast messages; Main Menu on game over (no auto-exit).
+
 ## Rules (short)
 
 Players take turns playing 1–4 cards face-down onto the pile, **claiming** the current rank (Ace → King, then Ace again). The next player may **Doubt**: if any of the last played cards don’t match the claim, the liar takes the whole pile; otherwise the doubter takes it. First to empty their hand wins.

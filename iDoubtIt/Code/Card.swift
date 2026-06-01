@@ -74,13 +74,14 @@ class Card: SKSpriteNode {
     private var bgNode: SKShapeNode!
     private var shadowNode: SKShapeNode!
     private var selectionBorder: SKShapeNode!
+    private var cornerTL: SKLabelNode?
+    private var cornerBR: SKLabelNode?
     var touchOffset = CGPoint.zero
     
-    // MARK: - Constants
-    private static let cardSize = CGSize(width: 160, height: 220)
-    private static let cornerRadius: CGFloat = 20
-    private static let lineWidth: CGFloat = 2
-    private static var emojiFontSize: CGFloat { cardSize.height * 0.88 }
+    private var layoutSize: CGSize
+    private var layoutCorner: CGFloat
+    private let lineWidth: CGFloat = 2
+    private var emojiFontSize: CGFloat { layoutSize.height * 0.62 }
     
     // MARK: - Initializers
     required init?(coder aDecoder: NSCoder) { 
@@ -94,10 +95,14 @@ class Card: SKSpriteNode {
         self.cardName = Card.generateCardName(suit: suit, value: value)
         self.emojiIcon = Card.getEmoji(for: value, suit: suit)
         
-        super.init(texture: nil, color: .clear, size: Card.cardSize)
+        let metrics = GameLayout.current
+        self.layoutSize = metrics.cardSize
+        self.layoutCorner = metrics.cardCornerRadius
+        
+        super.init(texture: nil, color: .clear, size: layoutSize)
         
         self.name = cardName
-        self.isUserInteractionEnabled = true
+        self.isUserInteractionEnabled = false
         self.zPosition = 100
         
         setupCard()
@@ -111,8 +116,25 @@ class Card: SKSpriteNode {
         setupLabel()
     }
     
+    /// Rebuild card chrome after screen size / rotation changes.
+    func applyLayoutMetrics(_ metrics: GameLayout.Metrics = GameLayout.current) {
+        layoutSize = metrics.cardSize
+        layoutCorner = metrics.cardCornerRadius
+        self.size = layoutSize
+        shadowNode.removeFromParent()
+        bgNode.removeFromParent()
+        selectionBorder.removeFromParent()
+        labelNode.removeFromParent()
+        cornerTL?.removeFromParent()
+        cornerBR?.removeFromParent()
+        setupShadow()
+        setupBackground()
+        setupSelectionBorder()
+        setupLabel()
+    }
+
     private func setupShadow() {
-        shadowNode = SKShapeNode(rectOf: Card.cardSize, cornerRadius: Card.cornerRadius)
+        shadowNode = SKShapeNode(rectOf: layoutSize, cornerRadius: layoutCorner)
         shadowNode.fillColor = UIColor.black.withAlphaComponent(0.28)
         shadowNode.strokeColor = .clear
         shadowNode.position = CGPoint(x: 4, y: -5)
@@ -121,17 +143,18 @@ class Card: SKSpriteNode {
     }
     
     private func setupBackground() {
-        bgNode = SKShapeNode(rectOf: Card.cardSize, cornerRadius: Card.cornerRadius)
+        bgNode = SKShapeNode(rectOf: layoutSize, cornerRadius: layoutCorner)
         bgNode.fillColor = currentFillColor
         bgNode.strokeColor = .black
-        bgNode.lineWidth = Card.lineWidth
+        bgNode.lineWidth = lineWidth
         bgNode.zPosition = 0
         bgNode.isUserInteractionEnabled = false
         addChild(bgNode)
         
+        let inset = max(6, layoutSize.width * 0.06)
         let inner = SKShapeNode(
-            rectOf: CGSize(width: Card.cardSize.width - 10, height: Card.cardSize.height - 10),
-            cornerRadius: Card.cornerRadius - 4
+            rectOf: CGSize(width: layoutSize.width - inset, height: layoutSize.height - inset),
+            cornerRadius: max(4, layoutCorner - 4)
         )
         inner.fillColor = .clear
         inner.strokeColor = UIColor.white.withAlphaComponent(facedUp ? 0.35 : 0.15)
@@ -142,8 +165,9 @@ class Card: SKSpriteNode {
     }
     
     private func setupSelectionBorder() {
-        let borderSize = CGSize(width: Card.cardSize.width + 8, height: Card.cardSize.height + 8)
-        selectionBorder = SKShapeNode(rectOf: borderSize, cornerRadius: Card.cornerRadius + 2)
+        let pad = max(6, layoutSize.width * 0.05)
+        let borderSize = CGSize(width: layoutSize.width + pad, height: layoutSize.height + pad)
+        selectionBorder = SKShapeNode(rectOf: borderSize, cornerRadius: layoutCorner + 2)
         selectionBorder.fillColor = .clear
         selectionBorder.strokeColor = GameTheme.gold
         selectionBorder.lineWidth = 4
@@ -154,20 +178,70 @@ class Card: SKSpriteNode {
     
     private func setupLabel() {
         labelNode = SKLabelNode(text: facedUp ? emojiIcon : "🎴")
-        labelNode.fontName = "AppleColorEmoji"
-        labelNode.fontSize = Card.emojiFontSize
+        labelNode.fontName = GameTheme.emojiFont
+        labelNode.fontSize = facedUp ? emojiFontSize : layoutSize.height * 0.5
         labelNode.verticalAlignmentMode = .center
         labelNode.horizontalAlignmentMode = .center
         labelNode.zPosition = 1
-        labelNode.fontColor = textColor
+        labelNode.fontColor = facedUp ? textColor : .white
         addChild(labelNode)
+        updateCornerLabels()
     }
     
     private func updateCardDisplay() {
         labelNode.text = facedUp ? emojiIcon : "🎴"
         labelNode.fontColor = facedUp ? textColor : .white
-        labelNode.fontSize = facedUp ? Card.emojiFontSize : Card.cardSize.height * 0.72
+        labelNode.fontSize = facedUp ? emojiFontSize : layoutSize.height * 0.5
         bgNode.fillColor = currentFillColor
+        if let inner = bgNode.childNode(withName: "innerHighlight") as? SKShapeNode {
+            inner.strokeColor = UIColor.white.withAlphaComponent(facedUp ? 0.35 : 0.15)
+        }
+        updateCornerLabels()
+    }
+
+    private func updateCornerLabels() {
+        cornerTL?.removeFromParent()
+        cornerBR?.removeFromParent()
+        cornerTL = nil
+        cornerBR = nil
+        guard facedUp else { return }
+
+        let cornerText: String
+        let cornerColor: UIColor
+        if value == .Joker {
+            cornerText = "JK"
+            cornerColor = UIColor(red: 0.35, green: 0.28, blue: 0.05, alpha: 1)
+        } else {
+            cornerText = GameTheme.rankShort(value) + GameTheme.suitSymbol(suit)
+            cornerColor = textColor
+        }
+
+        let fontSize = max(14, layoutSize.width * (value == .Ten ? 0.12 : 0.15))
+        let halfW = layoutSize.width / 2
+        let halfH = layoutSize.height / 2
+        let inset = max(8, layoutSize.width * 0.075)
+
+        let tl = SKLabelNode(text: cornerText)
+        tl.fontName = GameTheme.titleFont
+        tl.fontSize = fontSize
+        tl.fontColor = cornerColor
+        tl.verticalAlignmentMode = .top
+        tl.horizontalAlignmentMode = .left
+        tl.position = CGPoint(x: -halfW + inset, y: halfH - inset * 0.85)
+        tl.zPosition = 1.5
+        addChild(tl)
+        cornerTL = tl
+
+        let br = SKLabelNode(text: cornerText)
+        br.fontName = GameTheme.titleFont
+        br.fontSize = fontSize
+        br.fontColor = cornerColor
+        br.verticalAlignmentMode = .bottom
+        br.horizontalAlignmentMode = .right
+        br.position = CGPoint(x: halfW - inset, y: -halfH + inset * 0.85)
+        br.zPosition = 1.5
+        addChild(br)
+        cornerBR = br
     }
     
     // MARK: - Computed Properties
@@ -233,9 +307,10 @@ class Card: SKSpriteNode {
         }
     }
     
-    // MARK: - Touch Handling
+    // MARK: - Touch Handling (disabled — PlayScene handles selection)
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first,
+        guard isUserInteractionEnabled,
+              let touch = touches.first,
               let parentScene = scene as? PlayScene else { return }
         
         parentScene.pickedCard = self
@@ -247,7 +322,8 @@ class Card: SKSpriteNode {
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first,
+        guard isUserInteractionEnabled,
+              let touch = touches.first,
               let parentScene = scene else { return }
         
         let location = touch.location(in: parentScene)
@@ -255,11 +331,13 @@ class Card: SKSpriteNode {
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard isUserInteractionEnabled else { return }
         stopWiggleAnimation()
         zPosition = 100
     }
     
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard isUserInteractionEnabled else { return }
         stopWiggleAnimation()
         zPosition = 100
     }

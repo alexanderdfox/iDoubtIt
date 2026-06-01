@@ -2,59 +2,58 @@
 //  GameViewController.swift
 //  iDoubtIt
 //
-//  Updated 2025
-//
 
 import UIKit
 import SpriteKit
 
 class GameViewController: UIViewController {
 
-    // MARK: - Lifecycle
-    
+    private var lastLayoutSize: CGSize = .zero
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        // Allow this controller to respond to key events
-        self.becomeFirstResponder()
-        
-        setupScene()
-    }
-    
-    // MARK: - Setup
-    
-    private func setupScene() {
-        // Create SKView if it doesn't exist
-        let skView: SKView
-        if let existingSKView = self.view as? SKView {
-            skView = existingSKView
-        } else {
-            skView = SKView(frame: self.view.bounds)
-            self.view = skView
-        }
-        
-        // Create and configure the main menu scene
-        let scene = MainMenu(size: skView.bounds.size)
-        scene.scaleMode = .aspectFill
-        scene.backgroundColor = GameTheme.backgroundTop
-        
-        skView.showsFPS = false
-        skView.showsNodeCount = false
-        skView.ignoresSiblingOrder = false
-        
-        // Present the scene with a smooth fade transition
-        skView.presentScene(scene, transition: SKTransition.fade(withDuration: 0.3))
-    }
-    
-    // MARK: - Status Bar
-    
-    override var prefersStatusBarHidden: Bool {
-        return true
+        becomeFirstResponder()
     }
 
-    // MARK: - Responder
-    
-    override var canBecomeFirstResponder: Bool {
-        return true
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        let skView: SKView
+        if let existing = view as? SKView {
+            skView = existing
+        } else {
+            skView = SKView(frame: view.bounds)
+            view = skView
+        }
+
+        let newSize = skView.bounds.size
+        guard newSize.width > 1, newSize.height > 1 else { return }
+
+        if skView.scene == nil {
+            presentMainMenu(on: skView, size: newSize)
+            lastLayoutSize = newSize
+            return
+        }
+
+        guard abs(newSize.width - lastLayoutSize.width) > 0.5
+                || abs(newSize.height - lastLayoutSize.height) > 0.5 else { return }
+
+        lastLayoutSize = newSize
+        skView.scene?.size = newSize
+        GameLayout.configure(for: newSize)
+        (skView.scene as? LayoutResizing)?.layoutForCurrentSize()
     }
+
+    private func presentMainMenu(on skView: SKView, size: CGSize) {
+        GameLayout.configure(for: size)
+        let scene = MainMenu(size: size)
+        scene.scaleMode = .aspectFill
+        scene.backgroundColor = GameTheme.backgroundTop
+        skView.showsFPS = false
+        skView.showsNodeCount = false
+        skView.presentScene(scene, transition: SKTransition.fade(withDuration: 0.3))
+    }
+
+    override var prefersStatusBarHidden: Bool { true }
+    override var canBecomeFirstResponder: Bool { true }
 }

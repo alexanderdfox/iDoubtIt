@@ -59,28 +59,17 @@ class Deck {
     private func createDeck() {
         gameDeck.removeAll()
         
-        for suit in Suit.allCases {
-            for value in Value.allCases {
-                if shouldIncludeCard(suit: suit, value: value) {
-                    let card = Card(suit: suit, value: value, faceUp: false)
-                    gameDeck.append(card)
-                }
+        for suit in Suit.allCases where suit != .NoSuit {
+            for value in Value.allCases where value != .Joker {
+                gameDeck.append(Card(suit: suit, value: value, faceUp: false))
             }
         }
-    }
-    
-    private func shouldIncludeCard(suit: Suit, value: Value) -> Bool {
-        // Standard cards: exclude Jokers and NoSuit
-        if suit != .NoSuit && value != .Joker {
-            return true
-        }
         
-        // Wacky cards: Jokers with NoSuit
-        if isWacky && suit == .NoSuit && value != .Joker {
-            return true
+        if isWacky {
+            for _ in 0..<2 {
+                gameDeck.append(Card(suit: .NoSuit, value: .Joker, faceUp: false))
+            }
         }
-        
-        return false
     }
     
     // MARK: - Shuffling Methods

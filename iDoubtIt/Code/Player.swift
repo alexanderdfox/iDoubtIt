@@ -250,13 +250,11 @@ class Player: SKSpriteNode {
     
     // MARK: - AI Decision Making
     func shouldCallDoubt(lastValue: Value, numCardsPlayed: Int, lastPlayerCount: Int) -> Bool {
-        // Always call doubt if total cards exceed 4 (impossible scenario)
-        let haveCards = findCardsInHand(value: lastValue)
-        let totalCardsInPlay = haveCards.count + numCardsPlayed
-        
-        if totalCardsInPlay > 4 {
+        if !isWacky && numCardsPlayed > 4 {
             return true
         }
+        
+        _ = findCardsInHand(value: lastValue)
         
         // Strategic doubt calling based on AI behavior
         let doubtProbability = calculateDoubtProbability(

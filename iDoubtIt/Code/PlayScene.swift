@@ -49,44 +49,53 @@ enum GameError: Error, LocalizedError {
 }
 
 // MARK: - PlayScene Class
-class PlayScene: SKScene {
+class PlayScene: SKScene, LayoutResizing {
     
     // MARK: - Properties
+    var playMode: PlayMode = .humanPlay
     var discardPile: SKSpriteNode!
     var players: [Player] = []
     var pickedCard: Card?
     var isWacky: Bool = false
     
     // MARK: - Private Properties
-    private var lastTapTime: TimeInterval = 0
-    private let doubleTapThreshold: TimeInterval = 0.35
+    private var isWatchAI: Bool { playMode == .watchAI }
     private var doubtButton: SKSpriteNode?
     private var playButton: SKSpriteNode?
+    private var seatLabelNodes: [SKLabelNode] = []
+    private var seatHighlightNodes: [SKShapeNode] = []
+    private var toastLabel: SKLabelNode?
+    private var gameOverContainer: SKNode?
     
     // MARK: - Game State Management
     private var currentPlayerIndex: Int = 0
+    private var currentRankIndex: Int = 0
     private var gameState: GameState = .waitingForHuman
     private var lastPlayedCards: [Card] = []
     private var lastPlayedValue: Value?
     private var lastPlayerName: String = ""
-    private var currentRank: Value = .Ace
+    private var hudPanel: SKShapeNode?
     private var turnIndicator: SKLabelNode?
+    private var turnHintLabel: SKLabelNode?
     private var rankIndicator: SKLabelNode?
+    private var actionBar: SKShapeNode?
+    private let controlsZ: CGFloat = 1200
     private var pileCountLabel: SKLabelNode?
     private var selectedCards: [Card] = []
     private var maxCardsPerPlay: Int { isWacky ? 6 : 4 }
     
-    // Layout (matches Card 160×220; keeps hands on screen, cards upright)
-    private let layoutCardW: CGFloat = 160
-    private let layoutCardH: CGFloat = 220
-    private let layoutMinSpacing: CGFloat = 22
-    private let layoutPreferredSpacing: CGFloat = 42
-    private let layoutEdgeX: CGFloat = 88
-    private let layoutEdgeBottom: CGFloat = 108
-    private let layoutEdgeTop: CGFloat = 108
+    private var currentRank: Value {
+        Value(rawValue: currentRankIndex + 1) ?? .Ace
+    }
+    
+    private var L: GameLayout.Metrics { GameLayout.current }
     
     // MARK: - Scene Lifecycle
     override func didMove(to view: SKView) {
+        GameLayout.configure(for: size)
+        GameAudio.shared.unlock()
+        GameAudio.shared.applyVolumes()
+        if Pref.shared.musicOn { GameAudio.shared.syncMusic() }
         setupScene()
         startGame()
     }
@@ -102,6 +111,10 @@ class PlayScene: SKScene {
         setupDoubtButton()
         setupPlayButton()
         setupTurnIndicator()
+        setupSeatLabels()
+        setupSeatHighlights()
+        setupToast()
+        updateActionButtonsForMode()
     }
     
     private func setupBackground() {
@@ -110,28 +123,34 @@ class PlayScene: SKScene {
     }
     
     private func setupBackButton() {
-        let backButton = button(name: "Back", color: GameTheme.buttonGray, label: "Back")
-        backButton.position = CGPoint(x: backButton.size.width/2 + 20,
-                                      y: size.height - backButton.size.height/2 - 20)
+        let m = L.margins
+        let backButton = button(name: "Back", color: GameTheme.buttonGray, label: "Back", style: .compact)
+        backButton.position = CGPoint(
+            x: m.horizontal + backButton.size.width / 2,
+            y: size.height - m.top - backButton.size.height / 2
+        )
         backButton.zPosition = 999
         addChild(backButton)
     }
     
     private func setupDiscardPile() {
-        let cardSize = CGSize(width: 160, height: 220)
+        let cardSize = L.cardSize
         discardPile = SKSpriteNode(color: .clear, size: cardSize)
         discardPile.position = CGPoint(x: size.width/2, y: size.height/2)
         discardPile.zPosition = CardLevel.board.rawValue + 5
         discardPile.name = "DiscardPile"
         
-        let shadow = SKShapeNode(rectOf: cardSize, cornerRadius: 20)
+        let corner = max(12, L.cardCornerRadius)
+        let shadow = SKShapeNode(rectOf: cardSize, cornerRadius: corner)
+        shadow.name = "discardShadow"
         shadow.fillColor = UIColor.black.withAlphaComponent(0.25)
         shadow.strokeColor = .clear
         shadow.position = CGPoint(x: 4, y: -5)
         shadow.zPosition = 0
         discardPile.addChild(shadow)
         
-        let fill = SKShapeNode(rectOf: cardSize, cornerRadius: 20)
+        let fill = SKShapeNode(rectOf: cardSize, cornerRadius: corner)
+        fill.name = "discardFill"
         fill.fillColor = GameTheme.discardFill
         fill.strokeColor = .black
         fill.lineWidth = 2
@@ -140,21 +159,21 @@ class PlayScene: SKScene {
         
         let label = SKLabelNode(text: "Discard")
         label.fontName = GameTheme.bodyFont
-        label.fontSize = 18
-        label.fontColor = UIColor(white: 0.1, alpha: 0.85)
+        label.fontSize = 16
+        label.fontColor = UIColor(white: 0.12, alpha: 0.9)
         label.verticalAlignmentMode = .center
         label.horizontalAlignmentMode = .center
-        label.position = CGPoint(x: 0, y: 12)
+        label.position = CGPoint(x: 0, y: 14)
         label.zPosition = 2
         discardPile.addChild(label)
         
         pileCountLabel = SKLabelNode(text: "")
         pileCountLabel?.fontName = GameTheme.titleFont
-        pileCountLabel?.fontSize = 28
-        pileCountLabel?.fontColor = UIColor(white: 0.1, alpha: 0.9)
+        pileCountLabel?.fontSize = 26
+        pileCountLabel?.fontColor = UIColor(white: 0.1, alpha: 0.95)
         pileCountLabel?.verticalAlignmentMode = .center
         pileCountLabel?.horizontalAlignmentMode = .center
-        pileCountLabel?.position = CGPoint(x: 0, y: -18)
+        pileCountLabel?.position = CGPoint(x: 0, y: -16)
         pileCountLabel?.zPosition = 2
         if let pileCountLabel = pileCountLabel {
             discardPile.addChild(pileCountLabel)
@@ -190,30 +209,22 @@ class PlayScene: SKScene {
     }
     
     private func createPlayers() throws {
-        let level = Difficulty(rawValue: Pref.shared.difficulty) ?? .easy
-        let human = Player(human: true, playerName: "Human", level: level, wacky: isWacky)
-        let ai1 = Player(human: false, playerName: "AI 1", level: level, wacky: isWacky)
-        let ai2 = Player(human: false, playerName: "AI 2", level: level, wacky: isWacky)
-        let ai3 = Player(human: false, playerName: "AI 3", level: level, wacky: isWacky)
-        
-        players = [human, ai1, ai2, ai3]
-        
-        for player in players {
-            addChild(player)
-        }
+        players = buildPlayerList()
+        for player in players { addChild(player) }
     }
     
     private func createBasicPlayers() {
+        players = buildPlayerList()
+        for player in players { addChild(player) }
+    }
+    
+    private func buildPlayerList() -> [Player] {
         let level = Difficulty(rawValue: Pref.shared.difficulty) ?? .easy
-        let human = Player(human: true, playerName: "Human", level: level, wacky: isWacky)
-        let ai1 = Player(human: false, playerName: "AI 1", level: level, wacky: isWacky)
-        let ai2 = Player(human: false, playerName: "AI 2", level: level, wacky: isWacky)
-        let ai3 = Player(human: false, playerName: "AI 3", level: level, wacky: isWacky)
-        
-        players = [human, ai1, ai2, ai3]
-        
-        for player in players {
-            addChild(player)
+        let humanCount = isWatchAI ? 0 : Pref.shared.humanCount
+        return (0..<4).map { i in
+            let human = i < humanCount
+            let name = human ? "Player \(i + 1)" : "AI \(i + 1)"
+            return Player(human: human, playerName: name, level: level, wacky: isWacky)
         }
     }
     
@@ -229,127 +240,292 @@ class PlayScene: SKScene {
     }
     
     private func setupTurnIndicator() {
-        let hudY = size.height - layoutEdgeTop - layoutCardH - 36
-        let panel = GameTheme.makeHUDPanel(width: min(size.width - 40, 280), height: 72)
-        panel.position = CGPoint(x: size.width/2, y: hudY + 14)
+        let m = L.margins
+        let panelW = L.hudPanelWidth
+        let panelH = L.hudPanelHeight
+        let panelY = size.height - m.top - L.cardHeight * 0.12 - panelH / 2 - 6
+
+        let panel = GameTheme.makeHUDPanel(width: panelW, height: panelH)
+        panel.position = CGPoint(x: size.width / 2, y: panelY)
         panel.zPosition = 999
+        panel.name = "hudPanel"
         addChild(panel)
-        
-        turnIndicator = SKLabelNode(text: "Human's Turn")
+        hudPanel = panel
+
+        turnIndicator = SKLabelNode(text: "Player 1's turn")
         turnIndicator?.fontName = GameTheme.titleFont
-        turnIndicator?.fontSize = 22
+        turnIndicator?.fontSize = L.hudTurnSize
         turnIndicator?.fontColor = .white
-        turnIndicator?.position = CGPoint(x: size.width/2, y: hudY + 28)
-        turnIndicator?.zPosition = 1000
-        
+        turnIndicator?.verticalAlignmentMode = .center
+        turnIndicator?.horizontalAlignmentMode = .center
+        turnIndicator?.position = CGPoint(x: 0, y: 18)
+        turnIndicator?.zPosition = 2
+        if let turnIndicator = turnIndicator { panel.addChild(turnIndicator) }
+
+        turnHintLabel = SKLabelNode(text: "")
+        turnHintLabel?.fontName = GameTheme.bodyFont
+        turnHintLabel?.fontSize = L.hudHintSize
+        turnHintLabel?.fontColor = UIColor.white.withAlphaComponent(0.75)
+        turnHintLabel?.verticalAlignmentMode = .center
+        turnHintLabel?.horizontalAlignmentMode = .center
+        turnHintLabel?.position = CGPoint(x: 0, y: 2)
+        turnHintLabel?.zPosition = 2
+        if let turnHintLabel = turnHintLabel { panel.addChild(turnHintLabel) }
+
         rankIndicator = SKLabelNode(text: "Claim: Ace")
         rankIndicator?.fontName = GameTheme.bodyFont
-        rankIndicator?.fontSize = 17
+        rankIndicator?.fontSize = L.hudClaimSize
         rankIndicator?.fontColor = GameTheme.gold
-        rankIndicator?.position = CGPoint(x: size.width/2, y: hudY)
-        rankIndicator?.zPosition = 1000
-        
-        if let turnIndicator = turnIndicator { addChild(turnIndicator) }
-        if let rankIndicator = rankIndicator { addChild(rankIndicator) }
+        rankIndicator?.verticalAlignmentMode = .center
+        rankIndicator?.horizontalAlignmentMode = .center
+        rankIndicator?.position = CGPoint(x: 0, y: -20)
+        rankIndicator?.zPosition = 2
+        if let rankIndicator = rankIndicator { panel.addChild(rankIndicator) }
     }
-    
+
+    private func setupActionBar() {
+        actionBar?.removeFromParent()
+        let bar = GameTheme.makeActionBar(width: L.actionBarWidth, height: L.actionBarHeight)
+        bar.name = "actionBar"
+        bar.isUserInteractionEnabled = false
+        bar.zPosition = controlsZ - 5
+        addChild(bar)
+        actionBar = bar
+    }
+
     private func setupDoubtButton() {
-        doubtButton = button(name: "Doubt", color: GameTheme.buttonRed, label: "Doubt")
+        setupActionBar()
+        doubtButton = button(name: "Doubt", color: GameTheme.buttonRed, label: "Doubt", style: .regular)
         guard let doubtButton = doubtButton else { return }
-        
-        doubtButton.zPosition = 1000
-        doubtButton.name = "Doubt"
+        doubtButton.zPosition = controlsZ
         addChild(doubtButton)
-        
-        positionDoubtButton()
     }
-    
+
     private func setupPlayButton() {
-        playButton = button(name: "Play", color: GameTheme.buttonGreen, label: "Play")
-        guard let playButton = playButton else { return }
-        
-        playButton.zPosition = 1000
-        playButton.name = "Play"
-        playButton.alpha = 1.0 // Always visible
-        addChild(playButton)
-        
-        positionPlayButton()
+        if playButton == nil {
+            playButton = button(name: "Play", color: GameTheme.buttonGreen, label: "Play", style: .regular)
+            playButton?.zPosition = controlsZ
+            addChild(playButton!)
+        }
+        layoutActionControls()
     }
-    
-    private func positionDoubtButton() {
-        positionActionButtons()
+
+    private func positionDoubtButton() { layoutActionControls() }
+    private func positionPlayButton() { layoutActionControls() }
+
+    private func layoutActionControls() {
+        let barY = L.actionBarCenterY
+        let spread = L.actionButtonSpread
+        let cx = size.width / 2
+
+        if let doubtButton = doubtButton {
+            applyButtonStyle(.regular, to: doubtButton)
+        }
+        if let playButton = playButton {
+            applyButtonStyle(.regular, to: playButton)
+        }
+
+        if let bar = actionBar {
+            bar.path = CGPath(
+                roundedRect: CGRect(
+                    x: -L.actionBarWidth / 2,
+                    y: -L.actionBarHeight / 2,
+                    width: L.actionBarWidth,
+                    height: L.actionBarHeight
+                ),
+                cornerWidth: 14,
+                cornerHeight: 14,
+                transform: nil
+            )
+            bar.position = CGPoint(x: cx, y: barY)
+            bar.isHidden = isWatchAI
+            bar.zPosition = controlsZ - 5
+        }
+
+        doubtButton?.position = CGPoint(x: cx - spread, y: barY)
+        playButton?.position = CGPoint(x: cx + spread, y: barY)
+        doubtButton?.zPosition = controlsZ
+        playButton?.zPosition = controlsZ
+
+        let hide = isWatchAI
+        doubtButton?.isHidden = hide
+        playButton?.isHidden = hide
     }
-    
-    private func positionPlayButton() {
-        positionActionButtons()
-    }
-    
-    private func positionActionButtons() {
-        let handCenterY = layoutEdgeBottom + layoutCardH / 2
-        let buttonY = min(handCenterY + layoutCardH / 2 + 56, size.height * 0.38)
-        let spread: CGFloat = min(100, size.width * 0.12)
-        doubtButton?.position = CGPoint(x: size.width / 2 - spread, y: buttonY)
-        playButton?.position = CGPoint(x: size.width / 2 + spread, y: buttonY)
+
+    private func actionButton(at location: CGPoint) -> SKSpriteNode? {
+        for candidate in [playButton, doubtButton] {
+            guard let btn = candidate, !btn.isHidden, btn.alpha > 0.2 else { continue }
+            if btn.calculateAccumulatedFrame().contains(location) { return btn }
+        }
+        return nil
     }
     
     private func spacingFor(count: Int, span: CGFloat, cardExtent: CGFloat) -> CGFloat {
         guard count > 1 else { return 0 }
-        let needed = layoutPreferredSpacing * CGFloat(count - 1) + cardExtent
-        if needed <= span { return layoutPreferredSpacing }
-        return max(layoutMinSpacing, (span - cardExtent) / CGFloat(count - 1))
+        let needed = L.handPreferredGap * CGFloat(count - 1) + cardExtent
+        if needed <= span { return L.handPreferredGap }
+        return max(L.handMinGap, (span - cardExtent) / CGFloat(count - 1))
     }
     
     // MARK: - Game Start
     private func startGame() {
+        currentRankIndex = 0
         updateRankIndicator()
-        if let firstPlayer = players.first, firstPlayer.isHuman {
+        updateSeatLabels()
+        GameAudio.shared.deal()
+        
+        if isWatchAI {
+            showToast("AI only — sit back and watch.")
+        } else {
+            let aiSeats = 4 - Pref.shared.humanCount
+            showToast("\(Pref.shared.humanCount) human(s), \(aiSeats) AI — claim Ace, play 1–\(maxCardsPerPlay) cards.")
+        }
+        
+        beginCurrentTurn()
+    }
+    
+    private func beginCurrentTurn() {
+        guard gameState != .gameOver else { return }
+        let current = players[currentPlayerIndex]
+        if current.isHuman && !isWatchAI {
             gameState = .waitingForHuman
             updateTurnIndicator()
+            refreshAllHands()
+            GameAudio.shared.turn()
+            GameAudio.shared.hapticLight()
         } else {
             gameState = .waitingForAI
             updateTurnIndicator()
+            refreshAllHands()
             scheduleAITurn()
         }
     }
     
     private func scheduleAITurn() {
-        run(SKAction.wait(forDuration: 1.0)) { [weak self] in
+        let delay: TimeInterval = isWatchAI ? 0.9 : 1.0
+        run(SKAction.wait(forDuration: delay)) { [weak self] in
             self?.aiPlayTurn()
         }
     }
     
     // MARK: - Hand Layout
-    private func layoutAllHands() {
-        for player in players {
-            layoutHand(for: player)
+    private func refreshAllHands() {
+        for (index, player) in players.enumerated() {
+            let isCurrent = index == currentPlayerIndex
+            let faceUp = !isWatchAI && player.isHuman && isCurrent
+            let interactive = faceUp && gameState == .waitingForHuman
+            layoutHand(player, at: seatPosition(for: index), isFaceUp: faceUp, isInteractive: interactive)
         }
-        positionActionButtons()
+        layoutActionControls()
+        updateSeatHighlights()
+    }
+    
+    private func layoutAllHands() {
+        refreshAllHands()
     }
     
     private func layoutHand(for player: Player) {
-        switch player.name {
-        case "Human": layoutHandBottom(player)
-        case "AI 1": layoutHandLeft(player)
-        case "AI 2": layoutHandTop(player)
-        case "AI 3": layoutHandRight(player)
-        default: break
+        guard let index = players.firstIndex(where: { $0 === player }) else { return }
+        let isCurrent = index == currentPlayerIndex
+        let faceUp = !isWatchAI && player.isHuman && isCurrent
+        let interactive = faceUp && gameState == .waitingForHuman
+        layoutHand(player, at: seatPosition(for: index), isFaceUp: faceUp, isInteractive: interactive)
+    }
+    
+    private func seatPosition(for index: Int) -> HandPosition {
+        switch index {
+        case 0: return .bottom
+        case 1: return .left
+        case 2: return .top
+        case 3: return .right
+        default: return .bottom
         }
     }
     
-    private func layoutHandBottom(_ player: Player) {
-        layoutHand(player, at: .bottom, isFaceUp: true, isInteractive: true)
+    private func setupSeatLabels() {
+        let labelOffset = max(10, L.cardHeight * 0.06)
+        let sideLabelX = max(L.edgeSide * 0.35, 20)
+        let configs: [(CGPoint, SKLabelVerticalAlignmentMode)] = [
+            (CGPoint(x: size.width / 2, y: L.edgeBottom + L.cardHeight + labelOffset), .bottom),
+            (CGPoint(x: sideLabelX, y: size.height / 2), .center),
+            (CGPoint(x: size.width / 2, y: size.height - L.edgeTop - L.cardHeight - labelOffset), .top),
+            (CGPoint(x: size.width - sideLabelX, y: size.height / 2), .center)
+        ]
+        seatLabelNodes = configs.map { pos, align in
+            let label = SKLabelNode(text: "")
+            label.fontName = GameTheme.bodyFont
+            label.fontSize = L.seatLabelSize
+            label.fontColor = UIColor.white.withAlphaComponent(0.92)
+            label.fontName = GameTheme.titleFont
+            label.horizontalAlignmentMode = .center
+            label.verticalAlignmentMode = align
+            label.position = pos
+            label.zPosition = 998
+            addChild(label)
+            return label
+        }
     }
     
-    private func layoutHandTop(_ player: Player) {
-        layoutHand(player, at: .top, isFaceUp: false, isInteractive: false)
+    private func setupSeatHighlights() {
+        seatHighlightNodes = (0..<4).map { index in
+            let ring = SKShapeNode(circleOfRadius: max(22, L.cardWidth * 0.2))
+            ring.strokeColor = GameTheme.gold
+            ring.lineWidth = 3
+            ring.fillColor = .clear
+            ring.alpha = 0
+            ring.zPosition = 5
+            ring.position = seatLabelNodes[index].position
+            addChild(ring)
+            return ring
+        }
     }
     
-    private func layoutHandLeft(_ player: Player) {
-        layoutHand(player, at: .left, isFaceUp: false, isInteractive: false)
+    private func setupToast() {
+        let panelW = min(size.width - 48, 360)
+        let panel = GameTheme.makeHUDPanel(width: panelW, height: 48)
+        panel.position = CGPoint(x: size.width / 2, y: size.height * 0.44)
+        panel.zPosition = 1500
+        panel.alpha = 0
+        panel.name = "ToastPanel"
+        addChild(panel)
+
+        toastLabel = SKLabelNode(text: "")
+        toastLabel?.fontName = GameTheme.bodyFont
+        toastLabel?.fontSize = 15
+        toastLabel?.fontColor = .white
+        toastLabel?.verticalAlignmentMode = .center
+        toastLabel?.horizontalAlignmentMode = .center
+        toastLabel?.position = .zero
+        toastLabel?.zPosition = 1
+        panel.addChild(toastLabel!)
+    }
+
+    private func showToast(_ message: String, duration: TimeInterval = 2.8) {
+        guard let toastLabel = toastLabel,
+              let panel = childNode(withName: "ToastPanel") else { return }
+        toastLabel.text = message
+        panel.removeAllActions()
+        panel.alpha = 0
+        let fadeIn = SKAction.fadeIn(withDuration: 0.18)
+        let wait = SKAction.wait(forDuration: duration)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.35)
+        panel.run(SKAction.sequence([fadeIn, wait, fadeOut]))
     }
     
-    private func layoutHandRight(_ player: Player) {
-        layoutHand(player, at: .right, isFaceUp: false, isInteractive: false)
+    private func updateSeatLabels() {
+        for (i, player) in players.enumerated() where i < seatLabelNodes.count {
+            seatLabelNodes[i].text = player.name ?? "Player"
+        }
+    }
+    
+    private func updateSeatHighlights() {
+        for (i, ring) in seatHighlightNodes.enumerated() {
+            ring.alpha = (i == currentPlayerIndex && gameState != .gameOver) ? 0.85 : 0
+        }
+    }
+    
+    private func updateActionButtonsForMode() {
+        layoutActionControls()
     }
     
     private enum HandPosition {
@@ -361,39 +537,39 @@ class PlayScene: SKScene {
         let total = hand.count
         guard total > 0 else { return }
         
-        let availW = size.width - layoutEdgeX * 2
-        let availH = size.height - layoutEdgeTop - layoutEdgeBottom - 80
+        let availW = size.width - L.edgeSide * 2
+        let availH = size.height - L.edgeTop - L.edgeBottom - L.cardHeight * 0.35
         
         let spacing: CGFloat
         let positions: [CGPoint]
         
         switch position {
         case .bottom:
-            spacing = spacingFor(count: total, span: availW, cardExtent: layoutCardW)
+            spacing = spacingFor(count: total, span: availW, cardExtent: L.cardWidth)
             let span = spacing * CGFloat(total - 1)
             let startX = size.width / 2 - span / 2
-            let y = layoutEdgeBottom + layoutCardH / 2
+            let y = L.edgeBottom + L.cardHeight / 2
             positions = (0..<total).map { CGPoint(x: startX + CGFloat($0) * spacing, y: y) }
             
         case .top:
-            spacing = spacingFor(count: total, span: availW, cardExtent: layoutCardW)
+            spacing = spacingFor(count: total, span: availW, cardExtent: L.cardWidth)
             let span = spacing * CGFloat(total - 1)
             let startX = size.width / 2 - span / 2
-            let y = size.height - layoutEdgeTop - layoutCardH / 2
+            let y = size.height - L.edgeTop - L.cardHeight / 2
             positions = (0..<total).map { CGPoint(x: startX + CGFloat($0) * spacing, y: y) }
             
         case .left:
-            spacing = spacingFor(count: total, span: availH, cardExtent: layoutCardH)
+            spacing = spacingFor(count: total, span: availH, cardExtent: L.cardHeight)
             let span = spacing * CGFloat(total - 1)
             let startY = size.height / 2 + span / 2
-            let x = layoutEdgeX
+            let x = L.edgeSide
             positions = (0..<total).map { CGPoint(x: x, y: startY - CGFloat($0) * spacing) }
             
         case .right:
-            spacing = spacingFor(count: total, span: availH, cardExtent: layoutCardH)
+            spacing = spacingFor(count: total, span: availH, cardExtent: L.cardHeight)
             let span = spacing * CGFloat(total - 1)
             let startY = size.height / 2 + span / 2
-            let x = size.width - layoutEdgeX
+            let x = size.width - L.edgeSide
             positions = (0..<total).map { CGPoint(x: x, y: startY - CGFloat($0) * spacing) }
         }
         
@@ -403,8 +579,9 @@ class PlayScene: SKScene {
             card.setScale(1.0)
             card.zRotation = 0
             card.facedUp = isFaceUp
-            card.isUserInteractionEnabled = isInteractive
-            card.zPosition = CardLevel.board.rawValue + CGFloat(i)
+            // Scene handles taps; per-card interaction blocks PlayScene touchesBegan.
+            card.isUserInteractionEnabled = false
+            card.zPosition = min(CardLevel.board.rawValue + CGFloat(i), controlsZ - 50)
             card.position = positions[i]
         }
     }
@@ -413,23 +590,33 @@ class PlayScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
+
+        if let btn = actionButton(at: location) {
+            GameAudio.shared.ui()
+            switch btn.name {
+            case "Playbtn": handleHumanPlay()
+            case "Doubtbtn": handleHumanDoubt()
+            default: break
+            }
+            return
+        }
+
         let nodesAtPoint = nodes(at: location)
-        let now = CACurrentMediaTime()
-        
         for node in nodesAtPoint {
             if isButton(node, named: "Back") {
+                GameAudio.shared.ui()
                 goToMainMenu()
                 return
             }
-            if isButton(node, named: "Doubt") {
-                handleHumanDoubt()
+            if isButton(node, named: "Menu") {
+                GameAudio.shared.ui()
+                goToMainMenu()
                 return
             }
-            if isButton(node, named: "Play") {
-                handleHumanPlay()
-                return
-            }
-            if handleCardSelection(node, at: now) { return }
+        }
+
+        for node in nodesAtPoint {
+            if handleCardSelection(node) { return }
         }
     }
     
@@ -443,75 +630,27 @@ class PlayScene: SKScene {
         return false
     }
     
-    private func handleCardSelection(_ node: SKNode, at time: TimeInterval) -> Bool {
-        guard let card = node as? Card, card.isUserInteractionEnabled else { return false }
-        guard gameState == .waitingForHuman else { return false }
-        
-        if time - lastTapTime < doubleTapThreshold {
-            // Double tap toggles card selection
-            toggleCardSelection(card)
-            lastTapTime = 0
-            return true
-        } else {
-            // Single tap for dragging
-            pickedCard = card
-            card.zPosition = CardLevel.moving.rawValue
-            lastTapTime = time
-            return true
+    private func cardFromNode(_ node: SKNode) -> Card? {
+        var current: SKNode? = node
+        while let c = current {
+            if let card = c as? Card { return card }
+            current = c.parent
         }
+        return nil
     }
     
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let card = pickedCard,
-              let touch = touches.first else { return }
-        
-        let location = touch.location(in: self)
-        card.position = CGPoint(x: location.x - card.touchOffset.x, y: location.y - card.touchOffset.y)
-        
-        // Visual feedback when card is near discard pile
-        let distanceToDiscard = card.position.distance(to: discardPile.position)
-        if distanceToDiscard < 100 {
-            // Highlight discard pile when card is close
-            discardPile.alpha = 1.0
-            discardPile.setScale(1.1)
-        } else {
-            // Return discard pile to normal state
-            discardPile.alpha = 0.85
-            discardPile.setScale(1.0)
-        }
+    private func canSelectCard(_ card: Card) -> Bool {
+        guard !isWatchAI, gameState == .waitingForHuman else { return false }
+        guard let current = players[safe: currentPlayerIndex], current.isHuman else { return false }
+        return current.playerHand.contains { $0 === card }
     }
     
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let card = pickedCard else { return }
-        
-        // Check if card was dropped on discard pile
-        if card.position.distance(to: discardPile.position) < 100 {
-            // Card was dropped on discard pile - add it to selected cards
-            if !selectedCards.contains(where: { $0 === card }) {
-                toggleCardSelection(card)
-            }
-        }
-        
-        // Return card to hand
-        returnCardToHand(card)
-        pickedCard = nil
-        
-        // Reset discard pile visual state
-        resetDiscardPileVisual()
-    }
-    
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let card = pickedCard else { return }
-        
-        // Return card to hand and reset visual state
-        returnCardToHand(card)
-        pickedCard = nil
-        resetDiscardPileVisual()
-    }
-    
-    private func resetDiscardPileVisual() {
-        discardPile.alpha = 0.85
-        discardPile.setScale(1.0)
+    private func handleCardSelection(_ node: SKNode) -> Bool {
+        guard let card = cardFromNode(node), canSelectCard(card) else { return false }
+        toggleCardSelection(card)
+        GameAudio.shared.select()
+        GameAudio.shared.hapticLight()
+        return true
     }
     
     private func returnCardToHand(_ card: Card) {
@@ -534,31 +673,26 @@ class PlayScene: SKScene {
     }
     
     private func updatePlayButtonVisibility() {
-        if selectedCards.isEmpty {
-            playButton?.alpha = 0.3 // Greyed out when no cards selected
-        } else {
-            playButton?.alpha = 1.0 // Fully visible when cards are selected
-        }
+        guard !isWatchAI else { return }
+        let enabled = !selectedCards.isEmpty
+        playButton?.alpha = enabled ? 1.0 : 0.4
+        let count = selectedCards.count
+        playButton?.setButtonTitle(count > 0 ? "Play (\(count))" : "Play")
     }
     
     // MARK: - Game Logic
     private func handleHumanDoubt() {
         do {
-            guard gameState == .waitingForHuman else {
+            guard !isWatchAI, gameState == .waitingForHuman else {
                 throw GameError.invalidGameState
             }
-            
-            guard canCallDoubt(for: players.first(where: { $0.isHuman })) else {
-                return
-            }
-            
-            guard let human = players.first(where: { $0.isHuman }) else {
+            guard let current = players[safe: currentPlayerIndex], current.isHuman else {
                 throw GameError.noHumanPlayerFound
             }
+            guard canCallDoubt(for: current) else { return }
             
-            try resolveDoubt(calledBy: human)
+            try resolveDoubt(calledBy: current)
             nextTurn()
-            
         } catch {
             print("Error handling human doubt: \(error.localizedDescription)")
         }
@@ -566,51 +700,39 @@ class PlayScene: SKScene {
     
     private func handleHumanPlay() {
         do {
-            guard gameState == .waitingForHuman else {
+            guard !isWatchAI, gameState == .waitingForHuman else {
                 throw GameError.invalidGameState
             }
-            
-            guard !selectedCards.isEmpty else {
-                print("No cards selected to play")
-                return
-            }
-            
+            guard !selectedCards.isEmpty else { return }
             guard selectedCards.count <= maxCardsPerPlay else {
-                print("You can play at most \(maxCardsPerPlay) cards at once")
+                showToast("Play at most \(maxCardsPerPlay) cards.")
                 return
             }
-            
-            guard let human = players.first(where: { $0.isHuman }) else {
+            guard let current = players[safe: currentPlayerIndex], current.isHuman else {
                 throw GameError.noHumanPlayerFound
             }
             
+            GameAudio.shared.playCards()
             let played = selectedCards
             for card in played {
-                try moveCard(card, from: human, to: discardPile)
+                try moveCard(card, from: current, to: discardPile)
                 card.facedUp = false
             }
             
             lastPlayedCards = played
             lastPlayedValue = currentRank
-            lastPlayerName = human.name ?? ""
+            lastPlayerName = current.name ?? ""
             advanceRank()
             
-            // Clear selection
             selectedCards.removeAll()
             updatePlayButtonVisibility()
+            layoutHand(for: current)
             
-            // Layout the updated hand
-            layoutHand(for: human)
-            
-            // Check if human has no cards left
-            if human.playerHand.isEmpty {
-                gameOver(winner: "Human")
+            if current.playerHand.isEmpty {
+                gameOver(winner: current.name ?? "Player")
                 return
             }
-            
-            // Move to next turn
             nextTurn()
-            
         } catch {
             print("Error handling human play: \(error.localizedDescription)")
         }
@@ -641,10 +763,13 @@ class PlayScene: SKScene {
         let lied = lastPlayedCards.contains { !cardMatchesClaim($0, claim: claim) }
         let loser = lied ? cheater : doubter
         
+        GameAudio.shared.doubt()
         if lied {
-            print("\(doubter.name ?? "Player") caught \(cheater.name ?? "Unknown") bluffing!")
+            showToast("\(doubter.name ?? "Player") caught \(cheater.name ?? "AI") bluffing!")
+            GameAudio.shared.doubtWin()
         } else {
-            print("\(doubter.name ?? "Player") doubted incorrectly!")
+            showToast("\(doubter.name ?? "Player") doubted incorrectly!")
+            GameAudio.shared.doubtLose()
         }
         
         redistributeDiscardPile(to: loser)
@@ -666,12 +791,7 @@ class PlayScene: SKScene {
     }
     
     private func advanceRank() {
-        let nextRaw = currentRank.rawValue + 1
-        if let next = Value(rawValue: nextRaw) {
-            currentRank = next
-        } else {
-            currentRank = .Ace
-        }
+        currentRankIndex = (currentRankIndex + 1) % 13
         updateRankIndicator()
     }
     
@@ -747,8 +867,9 @@ class PlayScene: SKScene {
         do {
             try advanceToNextPlayer()
             try checkGameEndConditions()
-            updateGameState()
-            updateTurnIndicator()
+            beginCurrentTurn()
+        } catch GameError.gameOver {
+            // handled in checkGameEndConditions
         } catch {
             print("Error advancing to next turn: \(error.localizedDescription)")
         }
@@ -779,18 +900,8 @@ class PlayScene: SKScene {
     }
     
     private func updateGameState() {
-        let currentPlayer = players[currentPlayerIndex]
-        
-        if currentPlayer.isHuman {
-            gameState = .waitingForHuman
-            print("Human's turn")
-            // Clear any previous card selection
-            clearCardSelection()
-        } else {
-            gameState = .waitingForAI
-            print("\(currentPlayer.name ?? "AI")'s turn")
-            scheduleAITurn()
-        }
+        clearCardSelection()
+        beginCurrentTurn()
     }
     
     private func clearCardSelection() {
@@ -807,15 +918,27 @@ class PlayScene: SKScene {
     
     private func updateTurnIndicator() {
         guard let currentPlayer = players[safe: currentPlayerIndex] else { return }
-        turnIndicator?.text = "\(currentPlayer.name ?? "Player")'s Turn"
-        updateRankIndicator()
-        
-        if currentPlayer.isHuman {
-            updatePlayButtonVisibility()
-            doubtButton?.alpha = canCallDoubt(for: currentPlayer) ? 1.0 : 0.35
+        turnIndicator?.text = "\(currentPlayer.name ?? "Player")'s turn"
+
+        if currentPlayer.isHuman && !isWatchAI && gameState == .waitingForHuman {
+            turnHintLabel?.text = "Tap cards, then Play"
+            turnHintLabel?.isHidden = false
         } else {
-            playButton?.alpha = 0.3
-            doubtButton?.alpha = 0.35
+            turnHintLabel?.text = ""
+            turnHintLabel?.isHidden = true
+        }
+
+        updateRankIndicator()
+        updateSeatLabels()
+        updateSeatHighlights()
+
+        guard !isWatchAI else { return }
+        if currentPlayer.isHuman && gameState == .waitingForHuman {
+            updatePlayButtonVisibility()
+            doubtButton?.alpha = canCallDoubt(for: currentPlayer) ? 1.0 : 0.4
+        } else {
+            playButton?.alpha = 0.4
+            doubtButton?.alpha = 0.4
         }
     }
     
@@ -897,49 +1020,134 @@ class PlayScene: SKScene {
     // MARK: - Game End
     private func gameOver(winner: String) {
         gameState = .gameOver
-        print("Game Over! \(winner) wins!")
-        
+        GameAudio.shared.win()
+        GameAudio.shared.hapticMedium()
+        updateSeatHighlights()
         showGameOverMessage(winner: winner)
-        
-        run(SKAction.wait(forDuration: 3.0)) { [weak self] in
-            self?.goToMainMenu()
-        }
     }
     
     private func showGameOverMessage(winner: String) {
+        gameOverContainer?.removeFromParent()
+        let container = SKNode()
+        container.zPosition = 1999
+        gameOverContainer = container
+        
         let overlay = SKShapeNode(rectOf: size)
         overlay.fillColor = UIColor.black.withAlphaComponent(0.45)
         overlay.strokeColor = .clear
         overlay.position = CGPoint(x: size.width/2, y: size.height/2)
-        overlay.zPosition = 1999
-        addChild(overlay)
+        container.addChild(overlay)
         
         let panel = GameTheme.makeHUDPanel(width: min(size.width - 48, 320), height: 100)
-        panel.position = CGPoint(x: size.width/2, y: size.height/2)
-        panel.zPosition = 2000
-        addChild(panel)
+        panel.position = CGPoint(x: size.width/2, y: size.height/2 + 20)
+        container.addChild(panel)
         
         let gameOverLabel = SKLabelNode(text: "Game Over!")
         gameOverLabel.fontName = GameTheme.titleFont
         gameOverLabel.fontSize = 32
         gameOverLabel.fontColor = .white
-        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2 + 18)
-        gameOverLabel.zPosition = 2001
-        addChild(gameOverLabel)
+        gameOverLabel.position = CGPoint(x: size.width/2, y: size.height/2 + 38)
+        container.addChild(gameOverLabel)
         
         let winnerLabel = SKLabelNode(text: "\(winner) wins!")
         winnerLabel.fontName = GameTheme.bodyFont
         winnerLabel.fontSize = 22
         winnerLabel.fontColor = GameTheme.gold
-        winnerLabel.position = CGPoint(x: size.width/2, y: size.height/2 - 18)
-        winnerLabel.zPosition = 2001
-        addChild(winnerLabel)
+        winnerLabel.position = CGPoint(x: size.width/2, y: size.height/2 + 4)
+        container.addChild(winnerLabel)
+        
+        let menuBtn = button(name: "Menu", color: GameTheme.buttonGray, label: "Main Menu", style: .menu)
+        menuBtn.position = CGPoint(x: size.width/2, y: size.height/2 - 78)
+        menuBtn.zPosition = 2002
+        container.addChild(menuBtn)
+        
+        addChild(container)
     }
     
+    // MARK: - Layout (rotation / size class)
+    func layoutForCurrentSize() {
+        GameLayout.configure(for: size)
+
+        children.filter { $0.zPosition <= -8 }.forEach { $0.removeFromParent() }
+        GameTheme.addBackground(to: self, size: size)
+        GameTheme.addTableFelt(to: self, size: size)
+
+        if let back = childNode(withName: "Backbtn") {
+            let m = L.margins
+            back.position = CGPoint(
+                x: m.horizontal + back.frame.width / 2,
+                y: size.height - m.top - back.frame.height / 2
+            )
+        }
+
+        layoutDiscardPileGeometry()
+        layoutHUDGeometry()
+        layoutSeatUILabelPositions()
+        layoutActionControls()
+        updateTurnIndicator()
+
+        for player in players {
+            for card in player.playerHand {
+                card.applyLayoutMetrics()
+            }
+        }
+        for card in cardsOnDiscardPile() {
+            card.applyLayoutMetrics()
+        }
+        layoutAllHands()
+    }
+
+    private func layoutDiscardPileGeometry() {
+        guard let discardPile = discardPile else { return }
+        let cardSize = L.cardSize
+        let corner = max(12, L.cardCornerRadius)
+        let rect = CGRect(x: -cardSize.width / 2, y: -cardSize.height / 2, width: cardSize.width, height: cardSize.height)
+        discardPile.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        (discardPile.childNode(withName: "discardShadow") as? SKShapeNode)?.path =
+            CGPath(roundedRect: rect, cornerWidth: corner, cornerHeight: corner, transform: nil)
+        (discardPile.childNode(withName: "discardFill") as? SKShapeNode)?.path =
+            CGPath(roundedRect: rect, cornerWidth: corner, cornerHeight: corner, transform: nil)
+    }
+
+    private func layoutHUDGeometry() {
+        let m = L.margins
+        let panelY = size.height - m.top - L.cardHeight * 0.12 - L.hudPanelHeight / 2 - 6
+        hudPanel?.path = CGPath(roundedRect: CGRect(x: -L.hudPanelWidth/2, y: -L.hudPanelHeight/2, width: L.hudPanelWidth, height: L.hudPanelHeight), cornerWidth: 14, cornerHeight: 14, transform: nil)
+        hudPanel?.position = CGPoint(x: size.width / 2, y: panelY)
+        turnIndicator?.fontSize = L.hudTurnSize
+        turnHintLabel?.fontSize = L.hudHintSize
+        rankIndicator?.fontSize = L.hudClaimSize
+
+        if let panel = childNode(withName: "ToastPanel") as? SKShapeNode {
+            let w = min(size.width - 48, 360)
+            panel.path = CGPath(roundedRect: CGRect(x: -w/2, y: -24, width: w, height: 48), cornerWidth: 14, cornerHeight: 14, transform: nil)
+            panel.position = CGPoint(x: size.width / 2, y: size.height * 0.44)
+        }
+    }
+
+    private func layoutSeatUILabelPositions() {
+        guard seatLabelNodes.count == 4 else { return }
+        let labelOffset = max(10, L.cardHeight * 0.06)
+        let sideX = max(L.edgeSide * 0.35, 20)
+        let positions: [CGPoint] = [
+            CGPoint(x: size.width / 2, y: L.edgeBottom + L.cardHeight + labelOffset),
+            CGPoint(x: sideX, y: size.height / 2),
+            CGPoint(x: size.width / 2, y: size.height - L.edgeTop - L.cardHeight - labelOffset),
+            CGPoint(x: size.width - sideX, y: size.height / 2)
+        ]
+        for (i, label) in seatLabelNodes.enumerated() {
+            label.position = positions[i]
+            label.fontSize = L.seatLabelSize
+            if i < seatHighlightNodes.count {
+                seatHighlightNodes[i].position = positions[i]
+            }
+        }
+    }
+
     // MARK: - Navigation
     private func goToMainMenu() {
         guard let view = self.view else { return }
-        
+        removeAllActions()
         let mainMenu = MainMenu(size: view.bounds.size)
         mainMenu.scaleMode = .aspectFill
         view.presentScene(mainMenu, transition: SKTransition.fade(withDuration: 0.5))

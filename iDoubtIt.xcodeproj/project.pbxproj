@@ -22,6 +22,9 @@
 		02B5090F1D7A720700B6F9B2 /* SettingsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02B509071D7A720700B6F9B2 /* SettingsMenu.swift */; };
 		02FDD0631DB54869002B819E /* Buttons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02FDD0621DB54869002B819E /* Buttons.swift */; };
 		02THEME021DB54869002B819F /* GameTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02THEME011DB54869002B819F /* GameTheme.swift */; };
+		02AUDIO021DB54869002B8200 /* GameAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02AUDIO011DB54869002B8200 /* GameAudio.swift */; };
+		02PLAYM021DB54869002B8201 /* PlayMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02PLAYM011DB54869002B8201 /* PlayMode.swift */; };
+		02LAYOU021DB54869002B8202 /* GameLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02LAYOU011DB54869002B8202 /* GameLayout.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +44,9 @@
 		02B509071D7A720700B6F9B2 /* SettingsMenu.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SettingsMenu.swift; path = Code/SettingsMenu.swift; sourceTree = "<group>"; };
 		02FDD0621DB54869002B819E /* Buttons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Buttons.swift; path = Code/Buttons.swift; sourceTree = "<group>"; };
 		02THEME011DB54869002B819F /* GameTheme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GameTheme.swift; path = Code/GameTheme.swift; sourceTree = "<group>"; };
+		02AUDIO011DB54869002B8200 /* GameAudio.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GameAudio.swift; path = Code/GameAudio.swift; sourceTree = "<group>"; };
+		02PLAYM011DB54869002B8201 /* PlayMode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PlayMode.swift; path = Code/PlayMode.swift; sourceTree = "<group>"; };
+		02LAYOU011DB54869002B8202 /* GameLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = GameLayout.swift; path = Code/GameLayout.swift; sourceTree = "<group>"; };
 		D3EFEB061CD3C43400014542 /* iDoubtIt.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iDoubtIt.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -79,6 +85,9 @@
 				02B509071D7A720700B6F9B2 /* SettingsMenu.swift */,
 				02FDD0621DB54869002B819E /* Buttons.swift */,
 				02THEME011DB54869002B819F /* GameTheme.swift */,
+				02AUDIO011DB54869002B8200 /* GameAudio.swift */,
+				02PLAYM011DB54869002B8201 /* PlayMode.swift */,
+				02LAYOU011DB54869002B8202 /* GameLayout.swift */,
 			);
 			name = Swift;
 			sourceTree = "<group>";
@@ -203,6 +212,9 @@
 				02B5090B1D7A720700B6F9B2 /* PlayScene.swift in Sources */,
 				02B509091D7A720700B6F9B2 /* Card.swift in Sources */,
 				02THEME021DB54869002B819F /* GameTheme.swift in Sources */,
+				02AUDIO021DB54869002B8200 /* GameAudio.swift in Sources */,
+				02PLAYM021DB54869002B8201 /* PlayMode.swift in Sources */,
+				02LAYOU021DB54869002B8202 /* GameLayout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

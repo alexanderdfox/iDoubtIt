@@ -20,13 +20,50 @@ class Pref {
     
     // MARK: - Stored Preferences
     
-    /// Whether sound is enabled (default: true)
+    /// Human players for pass-and-play (1–4, default: 1)
+    var humanCount: Int {
+        get {
+            if prefs.object(forKey: "HumanCount") == nil { prefs.set(1, forKey: "HumanCount") }
+            let n = prefs.integer(forKey: "HumanCount")
+            return min(4, max(1, n))
+        }
+        set { prefs.set(min(4, max(1, newValue)), forKey: "HumanCount") }
+    }
+    
+    /// Whether sound effects are enabled (default: true)
     var soundOn: Bool {
         get {
             if prefs.object(forKey: "Sound") == nil { prefs.set(true, forKey: "Sound") }
             return prefs.bool(forKey: "Sound")
         }
         set { prefs.set(newValue, forKey: "Sound") }
+    }
+    
+    /// Background music (default: true)
+    var musicOn: Bool {
+        get {
+            if prefs.object(forKey: "Music") == nil { prefs.set(true, forKey: "Music") }
+            return prefs.bool(forKey: "Music")
+        }
+        set { prefs.set(newValue, forKey: "Music") }
+    }
+    
+    /// SFX volume 0…1 (default: 0.7)
+    var sfxVolume: Double {
+        get {
+            if prefs.object(forKey: "SfxVolume") == nil { prefs.set(0.7, forKey: "SfxVolume") }
+            return min(1, max(0, prefs.double(forKey: "SfxVolume")))
+        }
+        set { prefs.set(min(1, max(0, newValue)), forKey: "SfxVolume") }
+    }
+    
+    /// Music volume 0…1 (default: 0.35)
+    var musicVolume: Double {
+        get {
+            if prefs.object(forKey: "MusicVolume") == nil { prefs.set(0.35, forKey: "MusicVolume") }
+            return min(1, max(0, prefs.double(forKey: "MusicVolume")))
+        }
+        set { prefs.set(min(1, max(0, newValue)), forKey: "MusicVolume") }
     }
     
     /// Whether wacky mode is active (default: false)
