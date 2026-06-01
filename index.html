@@ -87,6 +87,39 @@
       margin-bottom: 2.5rem;
       font-weight: 500;
     }
+    #spectator-controls,
+    #human-controls {
+      display: none;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 8px 12px;
+      z-index: 80;
+      flex-wrap: wrap;
+    }
+    #human-controls {
+      position: absolute;
+      left: 50%;
+      bottom: max(8px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+    }
+    #spectator-controls {
+      position: absolute;
+      left: 50%;
+      bottom: max(8px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+    }
+    #spectator-controls.visible,
+    #human-controls.visible { display: flex; }
+    #spectator-controls .game-btn,
+    #human-controls .game-btn {
+      width: auto;
+      min-width: 120px;
+      padding: 0 1.1rem;
+    }
     .menu-buttons {
       display: flex;
       gap: 1.25rem;
@@ -316,7 +349,7 @@
       position: relative;
       z-index: 5;
       grid-template-columns: minmax(52px, 72px) minmax(0, 1fr) minmax(52px, 72px);
-      grid-template-rows: minmax(56px, auto) minmax(0, 1fr) minmax(118px, auto);
+      grid-template-rows: minmax(56px, auto) minmax(0, 1fr) minmax(100px, auto);
       grid-template-areas:
         "top top top"
         "left center right"
@@ -358,6 +391,7 @@
       align-items: center;
       gap: 8px;
       padding-top: 4px;
+      padding-bottom: 64px;
       max-height: 100%;
     }
     .seat-inner {
@@ -630,9 +664,10 @@
       <div class="scene-bg"></div>
       <p class="menu-suits" aria-hidden="true">♠ ♥ ♦ ♣</p>
       <h1>iDoubtIt</h1>
-      <p class="menu-tagline">The bluffing card game</p>
+      <p class="menu-tagline">Play with friends or watch the AIs</p>
       <div class="menu-buttons">
         <button type="button" class="game-btn green" id="menu-play">Play</button>
+        <button type="button" class="game-btn gray" id="menu-watch">Watch AI</button>
         <button type="button" class="game-btn gray" id="menu-settings">Settings</button>
       </div>
     </div>
@@ -643,6 +678,12 @@
       <h2>Settings</h2>
       <div class="settings-panel">
         <p class="settings-intro">These options apply to your next game.</p>
+
+        <div class="setting-block">
+          <span class="setting-label" id="label-humans">Human players</span>
+          <p class="setting-hint" id="hint-humans">Pass-and-play on this device (1–4). Empty seats use AI.</p>
+          <button type="button" class="game-btn green" id="toggle-humans" aria-labelledby="label-humans hint-humans">1</button>
+        </div>
 
         <div class="setting-block">
           <span class="setting-label" id="label-wacky">Wacky mode</span>
@@ -698,22 +739,22 @@
 
       <div id="hud">
         <div class="hud-panel">
-          <div id="hud-turn">Human's Turn</div>
+          <div id="hud-turn">AI 1's Turn</div>
           <div id="hud-claim">Claim: Ace</div>
         </div>
       </div>
 
       <div id="table">
-        <div class="seat seat-top" id="seat-ai2">
+        <div class="seat seat-top" id="seat-ai3">
           <div class="seat-inner">
-            <div class="seat-label">AI 2</div>
-            <div class="hand hand-h" id="hand-ai2" data-orient="h"></div>
+            <div class="seat-label" data-seat="2">AI 3</div>
+            <div class="hand hand-h" id="hand-ai3" data-orient="h"></div>
           </div>
         </div>
-        <div class="seat seat-left" id="seat-ai1">
+        <div class="seat seat-left" id="seat-ai2">
           <div class="seat-inner">
-            <div class="seat-label">AI 1</div>
-            <div class="hand vertical hand-v" id="hand-ai1" data-orient="v"></div>
+            <div class="seat-label" data-seat="1">AI 2</div>
+            <div class="hand vertical hand-v" id="hand-ai2" data-orient="v"></div>
           </div>
         </div>
         <div id="center">
@@ -722,22 +763,26 @@
             <span class="pile-badge" id="pile-badge" hidden></span>
           </div>
         </div>
-        <div class="seat seat-right" id="seat-ai3">
+        <div class="seat seat-right" id="seat-ai4">
           <div class="seat-inner">
-            <div class="seat-label">AI 3</div>
-            <div class="hand vertical hand-v" id="hand-ai3" data-orient="v"></div>
+            <div class="seat-label" data-seat="3">AI 4</div>
+            <div class="hand vertical hand-v" id="hand-ai4" data-orient="v"></div>
           </div>
         </div>
-        <div class="seat seat-bottom" id="seat-human">
-          <div id="action-buttons">
-            <button type="button" class="game-btn red" id="btn-doubt" disabled>Doubt</button>
-            <button type="button" class="game-btn green" id="btn-play" disabled>Play</button>
-          </div>
+        <div class="seat seat-bottom" id="seat-ai1">
           <div class="seat-inner">
-            <div class="seat-label" id="label-human">Human</div>
-            <div class="hand hand-h" id="human-hand" data-orient="h"></div>
+            <div class="seat-label" data-seat="0">Player 1</div>
+            <div class="hand hand-h" id="hand-ai1" data-orient="h"></div>
           </div>
         </div>
+      </div>
+
+      <div id="human-controls">
+        <button type="button" class="game-btn red" id="btn-doubt" disabled>Doubt</button>
+        <button type="button" class="game-btn green" id="btn-play" disabled>Play</button>
+      </div>
+      <div id="spectator-controls">
+        <button type="button" class="game-btn green" id="btn-step">Next turn</button>
       </div>
 
       <div id="toast"></div>
@@ -767,7 +812,14 @@
       Eight: "8", Nine: "9", Ten: "10", Jack: "J", Queen: "Q", King: "K", Joker: "JK"
     };
 
+    const PLAYER_HANDS = ["hand-ai1", "hand-ai2", "hand-ai3", "hand-ai4"];
+    const SEAT_IDS = ["seat-ai1", "seat-ai2", "seat-ai3", "seat-ai4"];
+
     const prefs = {
+      humanCount: (() => {
+        const n = parseInt(localStorage.getItem("humanCount") || "1", 10);
+        return Number.isNaN(n) ? 1 : Math.min(4, Math.max(1, n));
+      })(),
       wacky: localStorage.getItem("wacky") === "1",
       sound: localStorage.getItem("sound") !== "0",
       music: localStorage.getItem("music") !== "0",
@@ -965,12 +1017,76 @@
     }
 
     function savePrefs() {
+      localStorage.setItem("humanCount", String(prefs.humanCount));
       localStorage.setItem("wacky", prefs.wacky ? "1" : "0");
       localStorage.setItem("sound", prefs.sound ? "1" : "0");
       localStorage.setItem("music", prefs.music ? "1" : "0");
       localStorage.setItem("sfxVol", String(prefs.sfxVol));
       localStorage.setItem("musicVol", String(prefs.musicVol));
       localStorage.setItem("difficulty", String(prefs.difficulty));
+    }
+
+    function isAiOnlyMode() {
+      return game && game.aiOnly;
+    }
+
+    function buildPlayers(humanCount) {
+      const players = [];
+      for (let i = 0; i < 4; i++) {
+        const human = i < humanCount;
+        players.push({
+          name: human ? "Player " + (i + 1) : "AI " + (i + 1),
+          human,
+          hand: []
+        });
+      }
+      return players;
+    }
+
+    function updateSpectatorControls() {
+      const panel = document.getElementById("spectator-controls");
+      if (panel) panel.classList.toggle("visible", game && game.aiOnly && game.manualStep && !game.over);
+      const step = document.getElementById("btn-step");
+      if (step) step.disabled = !game || game.over;
+    }
+
+    function updateHumanControls() {
+      const panel = document.getElementById("human-controls");
+      const playBtn = document.getElementById("btn-play");
+      const doubtBtn = document.getElementById("btn-doubt");
+      if (!panel || !playBtn || !doubtBtn) return;
+
+      const cp = game && currentPlayer();
+      const show = game && !game.aiOnly && cp && cp.human && !game.over;
+      panel.classList.toggle("visible", show);
+      if (!show) return;
+
+      playBtn.disabled = game.selected.size === 0;
+      doubtBtn.disabled = !canDoubt();
+      const n = game.selected.size;
+      playBtn.textContent = n > 0 ? "Play (" + n + ")" : "Play";
+    }
+
+    function updateSeatLabels() {
+      if (!game) return;
+      document.querySelectorAll(".seat-label[data-seat]").forEach(el => {
+        const i = parseInt(el.dataset.seat, 10);
+        if (game.players[i]) el.textContent = game.players[i].name;
+      });
+    }
+
+    function maybeScheduleAI() {
+      if (!game || game.over) return;
+      if (game.aiOnly) {
+        if (game.manualStep) updateSpectatorControls();
+        else scheduleAI();
+        return;
+      }
+      updateHumanControls();
+      updateSpectatorControls();
+      const cp = currentPlayer();
+      if (!cp.human) scheduleAI();
+      else GameAudio.turn();
     }
 
     function toast(msg) {
@@ -1026,8 +1142,14 @@
       }
 
       el.setAttribute("aria-label", faceUp ? cardLabel(card) : "Face-down card");
-      if (!selectable) el.disabled = true;
-      if (onClick) el.addEventListener("click", onClick);
+      el.disabled = !selectable && !onClick;
+      if (onClick) {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        });
+      }
       wrap.appendChild(el);
       return wrap;
     }
@@ -1059,22 +1181,25 @@
       container.style.setProperty("--hand-gap", gap + "px");
     }
 
-    function renderHand(containerId, hand, faceUp, playerIndex) {
+    function renderHand(containerId, hand, faceUp, playerIndex, selectable) {
       const container = document.getElementById(containerId);
       if (!container) return;
       const orientation = container.dataset.orient || "h";
+      const canInteract = selectable && game && !game.over && game.current === playerIndex;
       container.innerHTML = "";
       hand.forEach(card => {
-        const selected = game && game.selected.has(card.id);
-        const selectable = faceUp && game && game.current === playerIndex && !game.over;
+        const selected = game.selected.has(card.id);
         container.appendChild(makeCardEl(card, {
           faceUp,
-          selectable,
-          selected,
-          onClick: selectable ? () => {
-            if (game.selected.has(card.id)) game.selected.delete(card.id);
-            else if (game.selected.size < game.maxPlay) game.selected.add(card.id);
-            GameAudio.select();
+          selectable: canInteract,
+          selected: canInteract && selected,
+          onClick: canInteract ? () => {
+            if (game.selected.has(card.id)) {
+              game.selected.delete(card.id);
+            } else if (game.selected.size < game.maxPlay) {
+              game.selected.add(card.id);
+              GameAudio.select();
+            }
             render();
           } : null
         }));
@@ -1083,6 +1208,11 @@
     }
 
     function updateSettingsUI() {
+      const h = document.getElementById("toggle-humans");
+      h.textContent = String(prefs.humanCount);
+      h.className = "game-btn green";
+      h.setAttribute("aria-label", prefs.humanCount + " human player(s)");
+
       const w = document.getElementById("toggle-wacky");
       w.textContent = prefs.wacky ? "On" : "Off";
       w.className = "game-btn " + (prefs.wacky ? "green" : "red");
@@ -1143,21 +1273,30 @@
       return card.rankIndex === claimIndex;
     }
 
-    function initGame() {
+    function initGame(options = {}) {
+      const aiOnly = options.aiOnly === true;
+      const manualStep = options.manualStep === true;
+      const humanCount = aiOnly ? 0 : prefs.humanCount;
       const wacky = prefs.wacky;
       const maxPlay = wacky ? 6 : 4;
       const deck = createDeck(wacky);
-      const players = [
-        { name: "Human", human: true, hand: [] },
-        { name: "AI 1", human: false, hand: [] },
-        { name: "AI 2", human: false, hand: [] },
-        { name: "AI 3", human: false, hand: [] }
-      ];
+      const players = aiOnly
+        ? [
+            { name: "AI 1", human: false, hand: [] },
+            { name: "AI 2", human: false, hand: [] },
+            { name: "AI 3", human: false, hand: [] },
+            { name: "AI 4", human: false, hand: [] }
+          ]
+        : buildPlayers(humanCount);
       while (deck.length) {
         players[deck.length % 4].hand.push(deck.pop());
       }
       game = {
-        wacky, maxPlay, players,
+        aiOnly,
+        manualStep,
+        wacky,
+        maxPlay,
+        players,
         current: 0,
         claimIndex: 0,
         pile: [],
@@ -1169,10 +1308,14 @@
       };
       document.getElementById("overlay-gameover").classList.remove("show");
       GameAudio.deal();
-      toast("Play 1–" + maxPlay + " cards. Claim: " + RANKS[0] + ".");
+      if (aiOnly) {
+        toast(manualStep ? "Watch AI — tap Next turn to advance." : "AI only — sit back and watch.");
+      } else {
+        const aiSeats = 4 - humanCount;
+        toast(humanCount + " human(s), " + aiSeats + " AI — claim " + RANKS[0] + ", play 1–" + maxPlay + " cards.");
+      }
       render();
-      GameAudio.turn();
-      if (!players[0].human) scheduleAI();
+      maybeScheduleAI();
     }
 
     function currentPlayer() { return game.players[game.current]; }
@@ -1183,8 +1326,7 @@
 
     function setActiveSeat() {
       document.querySelectorAll(".seat").forEach(s => s.classList.remove("active"));
-      const map = { 0: "seat-human", 1: "seat-ai1", 2: "seat-ai2", 3: "seat-ai3" };
-      document.getElementById(map[game.current])?.classList.add("active");
+      document.getElementById(SEAT_IDS[game.current])?.classList.add("active");
     }
 
     function advanceTurn() {
@@ -1194,9 +1336,10 @@
         const winner = alive[0] || game.players[0];
         document.getElementById("gameover-text").textContent = winner.name + " wins!";
         document.getElementById("overlay-gameover").classList.add("show");
-        if (winner.human) GameAudio.win();
-        else GameAudio.lose();
+        GameAudio.win();
         render();
+        updateHumanControls();
+        updateSpectatorControls();
         return;
       }
       let next = (game.current + 1) % game.players.length;
@@ -1207,8 +1350,7 @@
       game.current = next;
       game.selected.clear();
       render();
-      if (currentPlayer().human) GameAudio.turn();
-      if (!currentPlayer().human) scheduleAI();
+      maybeScheduleAI();
     }
 
     function resolveDoubt(doubterIndex) {
@@ -1221,11 +1363,10 @@
       const cheater = game.players[cheaterIndex];
       if (lied) {
         toast((doubter.name) + " caught " + cheater.name + " bluffing!");
-        if (doubter.human) GameAudio.doubtWin();
-        else if (cheater.human) GameAudio.doubtLose();
+        GameAudio.doubtWin();
       } else {
         toast((doubter.name) + " doubted incorrectly!");
-        if (doubter.human) GameAudio.doubtLose();
+        GameAudio.doubtLose();
       }
       game.players[loser].hand.push(...game.pile);
       game.pile = [];
@@ -1249,7 +1390,6 @@
       game.lastClaimIndex = game.claimIndex;
       game.lastPlayer = playerIndex;
       game.claimIndex = nextRankIndex(game.claimIndex);
-      if (p.human) toast("You played " + played.length + " as " + claimed + ".");
       render();
       advanceTurn();
     }
@@ -1285,7 +1425,9 @@
 
     function scheduleAI() {
       setTimeout(() => {
-        if (!game || game.over || currentPlayer().human) return;
+        if (!game || game.over) return;
+        if (game.aiOnly && game.manualStep) return;
+        if (!game.aiOnly && currentPlayer().human) return;
         runAITurn();
       }, 900);
     }
@@ -1306,7 +1448,9 @@
       if (!game) return;
 
       const cp = currentPlayer();
-      document.getElementById("hud-turn").textContent = (cp.name) + "'s Turn";
+      let turnText = cp.name + "'s turn";
+      if (!game.aiOnly && cp.human) turnText += " — tap cards, then Play";
+      document.getElementById("hud-turn").textContent = turnText;
       document.getElementById("hud-claim").textContent = "Claim: " + RANKS[game.claimIndex];
 
       const badge = document.getElementById("pile-badge");
@@ -1317,23 +1461,24 @@
         badge.hidden = true;
       }
 
-      renderHand("human-hand", game.players[0].hand, true, 0);
-      renderHand("hand-ai1", game.players[1].hand, false, 1);
-      renderHand("hand-ai2", game.players[2].hand, false, 2);
-      renderHand("hand-ai3", game.players[3].hand, false, 3);
+      PLAYER_HANDS.forEach((handId, i) => {
+        const p = game.players[i];
+        const faceUp = !game.aiOnly && p.human && game.current === i;
+        const selectable = faceUp && !game.over;
+        renderHand(handId, p.hand, faceUp, i, selectable);
+      });
 
       setActiveSeat();
+      updateSeatLabels();
+      updateHumanControls();
+      updateSpectatorControls();
 
       requestAnimationFrame(() => {
-        ["human-hand", "hand-ai1", "hand-ai2", "hand-ai3"].forEach(id => {
+        PLAYER_HANDS.forEach(id => {
           const el = document.getElementById(id);
           if (el && el.children.length) fitHandGap(el, el.dataset.orient || "h");
         });
       });
-
-      const humanTurn = game.current === 0 && !game.over;
-      document.getElementById("btn-play").disabled = !humanTurn || game.selected.size === 0;
-      document.getElementById("btn-doubt").disabled = !humanTurn || !canDoubt();
     }
 
     function uiClick(fn) {
@@ -1346,7 +1491,12 @@
 
     document.getElementById("menu-play").addEventListener("click", uiClick(() => {
       showScreen("screen-game");
-      initGame();
+      initGame({ aiOnly: false });
+    }));
+
+    document.getElementById("menu-watch").addEventListener("click", uiClick(() => {
+      showScreen("screen-game");
+      initGame({ aiOnly: true, manualStep: false });
     }));
 
     document.getElementById("menu-settings").addEventListener("click", uiClick(() => {
@@ -1355,6 +1505,12 @@
     }));
 
     document.getElementById("settings-back").addEventListener("click", uiClick(() => showScreen("screen-menu")));
+
+    document.getElementById("toggle-humans").addEventListener("click", uiClick(() => {
+      prefs.humanCount = (prefs.humanCount % 4) + 1;
+      savePrefs();
+      updateSettingsUI();
+    }));
 
     document.getElementById("toggle-wacky").addEventListener("click", uiClick(() => {
       prefs.wacky = !prefs.wacky;
@@ -1410,15 +1566,23 @@
       showScreen("screen-menu");
     }));
 
+    document.getElementById("btn-step").addEventListener("click", uiClick(() => {
+      if (!game || game.over || !game.aiOnly || !game.manualStep) return;
+      runAITurn();
+    }));
+
     document.getElementById("btn-play").addEventListener("click", uiClick(() => {
-      if (!game || game.current !== 0 || game.over) return;
-      playCards(0, [...game.selected]);
+      if (!game || game.over || game.aiOnly) return;
+      const cp = currentPlayer();
+      if (!cp.human || game.selected.size === 0) return;
+      playCards(game.current, [...game.selected]);
       game.selected.clear();
     }));
 
     document.getElementById("btn-doubt").addEventListener("click", uiClick(() => {
-      if (!game || !canDoubt() || game.current !== 0) return;
-      resolveDoubt(0);
+      if (!game || game.over || game.aiOnly) return;
+      if (!canDoubt() || !currentPlayer().human) return;
+      resolveDoubt(game.current);
     }));
 
     document.addEventListener("visibilitychange", () => {
